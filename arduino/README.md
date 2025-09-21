@@ -2,7 +2,7 @@
 
 Forked from https://github.com/smdprutser/IEC-printer.
 
-Once working this Arduino sketch will send raw print data to a Raspberry PI for printing to a USB printer. This is currently NOT WORKING for this use case.
+Once working this Arduino sketch will send raw print data from a C64 to a Raspberry PI for printing to a USB printer. This is currently NOT WORKING for this use case.
 
 # Info
 Most of the IEC routines borowed from https://github.com/Larswad/uno2iec . Many thanks for solving the gory details of the IEC and kept me focussing at the printercode.
