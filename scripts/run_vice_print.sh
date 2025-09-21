@@ -5,8 +5,9 @@
 set -euo pipefail
 
 ### ---- Configuration (edit if you want different filenames/paths) ----
-DISK_IMG="test.d64"
-SEQ_IN="print.dump"
+DISK_NAME="printimage"   # base name for D64 image
+DISK_IMG="${DISK_NAME}.d64"
+SEQ_IN="${1:-print.dump}" # Use first argument or default to print.dump
 SEQ_NAME_ON_DISK='dump.seq,s'   # how it appears on the D64
 BASIC_BAS="basic.bas"        # source BASIC file (if no basic.prg)
 BASIC_PRG="basic.prg"
@@ -43,7 +44,7 @@ echo "==> Step 1: Build D64 and write $SEQ_IN as \"$SEQ_NAME_ON_DISK\""
 # If an old image or BMP exists, remove it so format is clean
 rm -f "$DISK_IMG"
 rm -f *.bmp
-c1541 -format test,00 d64 "$DISK_IMG" -attach "$DISK_IMG" -write "$SEQ_IN" "$SEQ_NAME_ON_DISK"
+c1541 -format ${DISK_NAME},00 d64 "$DISK_IMG" -attach "$DISK_IMG" -write "$SEQ_IN" "$SEQ_NAME_ON_DISK"
 
 echo "==> Step 1.5: Ensure BASIC program exists"
 if [[ ! -f "$BASIC_PRG" ]]; then
@@ -76,6 +77,7 @@ if (( count == 0 )); then
 fi
 
 echo "Found $count BMP file(s): ${bmps[*]}"
+# leave commented out for now to avoid accidental printing, umcomment when ready for production
 #lpr "${bmps[@]}"
 
 # Time end and report
