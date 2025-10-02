@@ -27,7 +27,7 @@ need() {
 need c1541
 need "${X64_CMD}"
 need petcat
-need lpr
+need lp
 
 # Input file checks
 [[ -f "$SEQ_IN" ]]      || { echo "Error: Missing $SEQ_IN"; exit 1; }
@@ -62,7 +62,7 @@ echo "==> Step 3: Run emulator headless-ish with remote monitor and scripted qui
 #  - -warp speeds execution; your $MON_CMDS should eventually issue 'quit'.
 "${X64_CMD}" -console -remotemonitor -warp -moncommands "$MON_CMDS" "$DISK_IMG"
 
-echo "==> Step 4: Print BMP(s) via lpr"
+echo "==> Step 4: Print BMP(s) via lp"
 
 # Find BMPs (case-insensitive) in current directory
 shopt -s nullglob nocaseglob
@@ -78,7 +78,7 @@ fi
 
 echo "Found $count BMP file(s): ${bmps[*]}"
 # leave commented out for now to avoid accidental printing, umcomment when ready for production
-#lpr "${bmps[@]}"
+#lp "${bmps[@]}"
 
 # Time end and report
 END_TS="$(date +%s)"
