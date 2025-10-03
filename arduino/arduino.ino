@@ -1,5 +1,16 @@
 #include <WiFiS3.h>
 #include <avr/pgmspace.h>
+#include "config.h"
+
+/*
+Make sure your project has a file named config.h with the following content:
+// WiFi credentials - REPLACE with your network details
+char ssid[] = "your_SSID";
+char pass[] = "your_PASSWORD";
+// Server details - REPLACE with your server's IP address. This is where the Python script to receive the print data will be running.
+char server[] = "your_server_ip";
+int port = your_server_port;
+*/
 
 // This header is generated from your binary file (e.g., xxd -i my_image.bin > binary_data.h)
 // #include "print_hh.h" // print shop sign
@@ -8,14 +19,8 @@
 #include "print_cert.h" // certificate maker
 // #include "print_banner.h" // print shop banner
 
-// WiFi credentials - REPLACE with your network details
-char ssid[] = "";
-char pass[] = "";
+// initial wifi status
 int status = WL_IDLE_STATUS;
-
-// Server details - REPLACE with your server's IP address
-char server[] = "10.0.0.54";
-int port = 65432;
 
 WiFiClient client;
 
