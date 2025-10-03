@@ -99,13 +99,22 @@ def parse_and_render(raw, width=640, bg=255, fg=0):
             canvas = plot_column(canvas, x, y, byte, fg, width, bg)
             x += 1
 
-    # Trim trailing bg rows
-    last_non_bg = 0
-    for r in range(canvas.shape[0] - 1, -1, -1):
-        if np.any(canvas[r] != bg):
-            last_non_bg = r + 1
-            break
-    canvas = canvas[:max(1, last_non_bg), :]
+    # Find content bounds to trim and center
+    non_bg_rows = np.any(canvas != bg, axis=1)
+    non_bg_cols = np.any(canvas != bg, axis=0)
+
+    if np.any(non_bg_rows):
+        # Trim whitespace
+        first_row = np.argmax(non_bg_rows)
+        last_row = len(non_bg_rows) - np.argmax(np.flip(non_bg_rows))
+        first_col = np.argmax(non_bg_cols)
+        last_col = len(non_bg_cols) - np.argmax(np.flip(non_bg_cols))
+        # Crop the canvas to the content, removing all whitespace
+        canvas = canvas[first_row:last_row, first_col:last_col]
+    else:
+        # Image is empty, return a 1x1 pixel image
+        canvas = np.full((1, 1), bg, dtype=np.uint8)
+
     return canvas
 
 def write_bmp(path, arr):
@@ -137,9 +146,8 @@ def start_server(host='0.0.0.0', port=65432):
                     try:
                         write_bmp(out_bmp, canvas)
                         print(f"Wrote BMP: {out_bmp} ({canvas.shape[1]}x{canvas.shape[0]})", file=sys.stderr)
-                        # print out_bmp to a printer using the lp command
-                        # print(f"Printing BMP: {out_bmp}", file=sys.stderr)
-                        # subprocess.run(["lp", out_bmp], check=True, capture_output=True, text=True)
+                        print(f"Printing BMP: {out_bmp}", file=sys.stderr)
+                        subprocess.run(["lp", "-o", "fit-to-page", out_bmp], check=True, capture_output=True, text=True)
                     except Exception as e:
                         print(f"Failed to write or print BMP: {e}", file=sys.stderr)
 
