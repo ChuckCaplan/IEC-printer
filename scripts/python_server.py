@@ -117,9 +117,38 @@ def parse_and_render(raw, width=640, bg=255, fg=0):
 
     return canvas
 
-def write_bmp(path, arr):
-    img = Image.fromarray(arr, mode="L")
-    img.save(path, format="BMP")
+def scale_and_write_bmp(path, canvas, dpi=300, paper_width_in=8.5, paper_height_in=11, bg=255):
+    """
+    Scales the canvas to fit a standard paper size at a given DPI,
+    preserving the aspect ratio, and saves it as a BMP.
+    """
+    # Convert the numpy canvas to a PIL Image
+    source_img = Image.fromarray(canvas, mode="L")
+
+    # Define target page dimensions in pixels
+    page_width_px = int(paper_width_in * dpi)
+    page_height_px = int(paper_height_in * dpi)
+
+    # Calculate scaling factor to fit the page while preserving aspect ratio
+    source_width, source_height = source_img.size
+    if source_width == 0 or source_height == 0:
+        # Handle empty image case
+        final_img = Image.new("L", (1, 1), bg)
+        final_img.save(path, format="BMP")
+        return
+
+    scale = min(page_width_px / source_width, page_height_px / source_height)
+    new_width = int(source_width * scale)
+    new_height = int(source_height * scale)
+
+    # Resize the image using nearest-neighbor for a sharp, pixelated look
+    resized_img = source_img.resize((new_width, new_height), Image.NEAREST)
+
+    # Create a new blank page and paste the resized image in the center
+    final_img = Image.new("L", (page_width_px, page_height_px), bg)
+    final_img.paste(resized_img, ((page_width_px - new_width) // 2, (page_height_px - new_height) // 2))
+
+    final_img.save(path, format="BMP")
 
 def start_server(host='0.0.0.0', port=65432):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -144,10 +173,10 @@ def start_server(host='0.0.0.0', port=65432):
                     out_bmp = f"{time.time()}.bmp"
 
                     try:
-                        write_bmp(out_bmp, canvas)
+                        scale_and_write_bmp(out_bmp, canvas)
                         print(f"Wrote BMP: {out_bmp} ({canvas.shape[1]}x{canvas.shape[0]})", file=sys.stderr)
-                        print(f"Printing BMP: {out_bmp}", file=sys.stderr)
-                        subprocess.run(["lp", "-o", "fit-to-page", out_bmp], check=True, capture_output=True, text=True)
+                        # print(f"Printing BMP: {out_bmp}", file=sys.stderr)
+                        # subprocess.run(["lp", out_bmp], check=True, capture_output=True, text=True)
                     except Exception as e:
                         print(f"Failed to write or print BMP: {e}", file=sys.stderr)
 
