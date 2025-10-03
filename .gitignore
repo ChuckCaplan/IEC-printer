@@ -5,3 +5,4 @@ dev1
 *.ppm
 *.dump
 printimage.d64
+print_*.h

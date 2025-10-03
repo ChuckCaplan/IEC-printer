@@ -1,0 +1,19 @@
+[Unit]
+Description=IEC Printer Server
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+
+# Change this to the user you created on your Raspberry Pi
+User=chuck
+
+# The command to start the server. %h is a systemd specifier that expands to the home directory of the User=.
+WorkingDirectory=%h/IEC-printer
+ExecStart=python %h/IEC-printer/scripts/python_server.py
+
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

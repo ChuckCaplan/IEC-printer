@@ -1,109 +1,102 @@
+#include <WiFiS3.h>
+#include <avr/pgmspace.h>
 
-#include "global_defines.h"
-#include "iec_driver.h"
-#include "interface.h"
-#include "printer.h"
+// This header is generated from your binary file (e.g., xxd -i my_image.bin > binary_data.h)
+ #include "print_hh.h" // print shop happy hanukkah sign
+// #include "print_cert.h" // certificate maker
+// #include "print_banner.h" // print shop banner
 
+// WiFi credentials - REPLACE with your network details
+char ssid[] = "caplan";
+char pass[] = "B46DF340E8";
+int status = WL_IDLE_STATUS;
 
-// The global IEC handling singleton:
-static IEC iec(4);
-static Interface iface(iec);
+// Server details - REPLACE with your server's IP address
+char server[] = "10.0.0.54";
+int port = 65432;
 
-#define LONGPRESS   1000
-#define SHORTPRESS  200
-#define DEBOUNCE    50
+WiFiClient client;
 
-static uint8_t button_laststate;
-static uint32_t button_downtime;
-int iecaddr;
-
-void setup()
-{
-  
-  // Initialize serial and wait for port to open:
-  COMPORT.begin(DEFAULT_BAUD_RATE);
-  COMPORT.setTimeout(SERIAL_TIMEOUT_MSECS);
-  c64printinit();
-
-  pinMode(A4, OUTPUT);  // busy led
-  digitalWrite(A4, 0);
-
-  pinMode(7, INPUT);    // iec address
-  pinMode(A5 ,INPUT);     // online button
-
-  button_laststate=HIGH;
-
-  delay(100);
-
-  if(digitalRead(7)==HIGH)
-    iecaddr=5;
-  else
-    iecaddr=4;
-
-  // check if button is pressed
-  if(digitalRead(A5)==LOW)
-  {
-    c64testpage(iecaddr);
-  }
-  
-
-  iec.setDeviceNumber(iecaddr);   // 4 or 5 for printer
-                                  // atn, clk, dat, srq, reset
-  iec.setPins(2, 3, 4, 6, 5);     // sx64: 2=gnd, 3=atn, 4=clk, 5=dat, 6=reset 1=srqin
-
-
-	// set all digital pins in a defined state.
-	iec.init();
-
-  digitalWrite(A4, 1);
-} // setup
-
-
-
-void loop()
-{
-  /*
-  if(IEC::ATN_RESET == iface.handler()) {
-  	// Wait for it to get out of reset.
-		while(IEC::ATN_RESET == iface.handler());
-	}
-*/
-  uint32_t downtime;
-
-  switch(iface.handler())
-  {
-    case IEC::ATN_RESET:  while(IEC::ATN_RESET == iface.handler());
-                          break;
-    case IEC::ATN_IDLE:   if((digitalRead(A5)==LOW)&&(button_laststate==HIGH))
-                          {
-                            button_downtime=millis();
-                            button_laststate=LOW;
-                          }
-                          else if((digitalRead(A5)==HIGH)&&(button_laststate==LOW))
-                          {
-                            downtime=millis()-button_downtime;
-                            if((downtime>DEBOUNCE)&&(downtime<SHORTPRESS))
-                            {
-                              c64feed();
-                            }
-                            if(downtime>LONGPRESS)
-                            {
-                              if(iec.deviceNumber()==31)
-                              {
-                                iec.setDeviceNumber(iecaddr);
-                                digitalWrite(A4, 1);
-                              }
-                              else
-                              {
-                                iec.setDeviceNumber(31);
-                                digitalWrite(A4, 0);
-                              }
-                              
-                            }
-                            button_laststate=HIGH;
-                          }
-                          break;
+void setup() {
+  Serial.begin(9600);
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
   }
 
- 
-} // loop
+  // check for the WiFi module
+  if (WiFi.status() == WL_NO_MODULE) {
+    Serial.println("Communication with WiFi module failed!");
+    // don't continue
+    while (true);
+  }
+
+  String fv = WiFi.firmwareVersion();
+  if (fv < WIFI_FIRMWARE_LATEST_VERSION) {
+    Serial.println("Please upgrade the firmware");
+  }
+
+  // attempt to connect to WiFi network
+  while (status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(ssid);
+    status = WiFi.begin(ssid, pass);
+
+    // wait 10 seconds for connection
+    delay(10000);
+  }
+
+  Serial.println("Connected to WiFi");
+  printWifiStatus();
+
+  Serial.println("\nStarting connection to server...");
+  // if you get a connection, report back via serial
+  if (client.connect(server, port)) {
+    Serial.println("Connected to server");
+    Serial.print("Sending binary data: ");
+    Serial.print(print_dump_len);
+    Serial.println(" bytes");
+    
+    // Send data in chunks to avoid watchdog timeout
+    const size_t CHUNK_SIZE = 1024;
+    size_t sent = 0;
+    while (sent < print_dump_len) {
+      size_t to_send = min(CHUNK_SIZE, print_dump_len - sent);
+      client.write(print_dump + sent, to_send);
+      sent += to_send;
+      delay(10);  // Small delay to feed watchdog
+    }
+
+    // After sending, explicitly close the connection to signal the end of transmission.
+    Serial.println("Data sent. Closing connection.");
+    client.stop();
+  }
+}
+
+void loop() {
+  // if the server's disconnected, stop the client
+  if (!client.connected()) {
+    Serial.println();
+    Serial.println("Disconnecting from server.");
+    client.stop();
+
+    // do nothing forevermore
+    while (true);
+  }
+}
+
+void printWifiStatus() {
+  // print the SSID of the network you're attached to
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+
+  // print your board's IP address
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
+
+  // print the received signal strength
+  long rssi = WiFi.RSSI();
+  Serial.print("signal strength (RSSI):");
+  Serial.print(rssi);
+  Serial.println(" dBm");
+}
