@@ -2,8 +2,10 @@
 #include <avr/pgmspace.h>
 
 // This header is generated from your binary file (e.g., xxd -i my_image.bin > binary_data.h)
- #include "print_hh.h" // print shop happy hanukkah sign
-// #include "print_cert.h" // certificate maker
+// #include "print_hh.h" // print shop sign
+// #include "print_letterhead.h" // print shop letterhead
+// #include "print_card.h" // print shop card
+#include "print_cert.h" // certificate maker
 // #include "print_banner.h" // print shop banner
 
 // WiFi credentials - REPLACE with your network details

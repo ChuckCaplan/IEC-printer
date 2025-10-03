@@ -4,32 +4,33 @@
 import subprocess
 import socket
 import time
-import argparse
 import sys
 import numpy as np
 from PIL import Image
 
-DOT_ROW_HEIGHT = 7  # vertical dots per printed "band"
+import numpy as np
 
-def ensure_height(canvas, height, width, bg):
-    if canvas.shape[0] >= height:
-        return canvas
-    add_rows = height - canvas.shape[0]
-    extra = np.full((add_rows, width), bg, dtype=np.uint8)
-    return np.vstack([canvas, extra])
+import numpy as np
 
-def plot_column(canvas, x, y, pattern, fg, width, bg):
-    patt = pattern & 0x7F
-    if x < 0 or x >= width:
-        return canvas
-    canvas = ensure_height(canvas, y + DOT_ROW_HEIGHT, width, bg)
-    for b in range(DOT_ROW_HEIGHT):
-        if (patt >> b) & 1:
-            canvas[y + b, x] = fg
-    return canvas
+DOT_ROW_HEIGHT = 7  # vertical dots per printed band (MPS-803)
 
-def parse_and_render(raw, width=640, bg=255, fg=0):
+def parse_and_render(raw: bytes, width: int = 640, bg: int = 255, fg: int = 0):
     canvas = np.full((1, width), bg, dtype=np.uint8)
+
+    def ensure_height(h):
+        nonlocal canvas
+        if canvas.shape[0] < h:
+            add = h - canvas.shape[0]
+            canvas = np.vstack([canvas, np.full((add, width), bg, dtype=np.uint8)])
+
+    def plot_col(x, y, byte):
+        # LSB at top, 7 dots tall
+        if 0 <= x < width:
+            ensure_height(y + DOT_ROW_HEIGHT)
+            patt = byte & 0x7F
+            for b in range(DOT_ROW_HEIGHT):
+                if (patt >> b) & 1:
+                    canvas[y + b, x] = fg
 
     x = 0
     y = 0
@@ -38,144 +39,72 @@ def parse_and_render(raw, width=640, bg=255, fg=0):
     bit_image = False
 
     def newline():
-        nonlocal x, y, canvas
+        nonlocal x, y, bit_image
         x = 0
         y += DOT_ROW_HEIGHT
-        canvas = ensure_height(canvas, y + DOT_ROW_HEIGHT, width, bg)
-
-    while i < n:
-        byte = raw[i]; i += 1
-
-        if byte == 8:  # bit image mode
-            bit_image = True
-            continue
-
-        if byte == 26 and bit_image:  # repeat column
-            if i + 2 <= n:
-                count = raw[i]; patt = raw[i+1]; i += 2
-                count = 256 if count == 0 else count
-                for _ in range(count):
-                    if x >= width:
-                        newline()
-                    canvas = plot_column(canvas, x, y, patt, fg, width, bg)
-                    x += 1
-            continue
-
-        if byte == 16 and i + 2 <= n:  # POS two ASCII digits
-            c1, c2 = raw[i], raw[i+1]
-            if 48 <= c1 <= 57 and 48 <= c2 <= 57:
-                pos = (c1 - 48) * 10 + (c2 - 48)
-                x = min(width - 1, pos * 6)
-            i += 2
-            continue
-
-        if byte == 27:  # ESC
-            if i < n and raw[i] == 16 and i + 3 <= n:
-                i += 1
-                nH = raw[i]; nL = raw[i+1]; i += 2
-                addr = (nH << 8) | nL
-                if addr >= width:
-                    lines_down = addr // width
-                    for _ in range(lines_down):
-                        newline()
-                    addr = addr % width
-                x = addr
-            continue
-
-        if byte in (10, 13):  # LF/CR
-            # swallow an immediate CR/LF pair
-            if i < n and raw[i] in (10, 13) and raw[i] != byte:
-                i += 1
-            newline()
-            continue
-
-        if byte in (14, 15):  # enhance off/on cancels bit image
-            bit_image = False
-            continue
-
-        if byte in (17, 145, 18, 146, 34):  # ignored modes
-            continue
-
-        if bit_image:
-            if x >= width:
-                newline()
-            canvas = plot_column(canvas, x, y, byte, fg, width, bg)
-            x += 1
-
-    # Find content bounds to trim and center
-    non_bg_rows = np.any(canvas != bg, axis=1)
-    non_bg_cols = np.any(canvas != bg, axis=0)
-
-    if np.any(non_bg_rows):
-        # Trim whitespace
-        first_row = np.argmax(non_bg_rows)
-        last_row = len(non_bg_rows) - np.argmax(np.flip(non_bg_rows))
-        first_col = np.argmax(non_bg_cols)
-        last_col = len(non_bg_cols) - np.argmax(np.flip(non_bg_cols))
-        # Crop the canvas to the content, removing all whitespace
-        canvas = canvas[first_row:last_row, first_col:last_col]
-    else:
-        # Image is empty, return a 1x1 pixel image
-        canvas = np.full((1, 1), bg, dtype=np.uint8)
-
-    return canvas
-
-def parse_and_render2(raw, bg=255, fg=0):
-    lines = []
-    line = []
-    bit = False
-    i, n = 0, len(raw)
+        ensure_height(y + DOT_ROW_HEIGHT)
+        # The real printer leaves graphics mode between lines; you must send 0x08 again.
+        bit_image = False
 
     while i < n:
         b = raw[i]; i += 1
 
-        if b == 0x08:               # graphics mode ON for this band
-            bit = True
+        # Enter bit-image
+        if b == 0x08:
+            bit_image = True
             continue
 
-        if b == 0x0D:               # CR ends the 7-dot band
-            # compress any run of CRs into empty bands
-            lines.append(line)
-            line = []
-            bit = False
-            while i < n and raw[i] == 0x0D:
-                lines.append([])    # extra blank bands
+        # Paper advance: the ONLY time we move to the next band
+        if b in (0x0A, 0x0D):  # LF/CR
+            # swallow CRLF pair
+            if i < n and raw[i] in (0x0A, 0x0D) and raw[i] != b:
                 i += 1
+            newline()
             continue
 
-        if bit:
-            line.append(b & 0x7F)   # **EVERY byte is one column; mask to 7 bits**
+        # Repeat columns: 0x1A, count, byte (count 0 => 256)
+        if b == 0x1A:
+            if i + 2 <= n:
+                count = raw[i]; patt = raw[i+1]; i += 2
+                count = 256 if count == 0 else count
+                if bit_image:
+                    # draw up to right margin; printer ignores the rest
+                    todo = min(count, max(0, width - x))
+                    for _ in range(todo):
+                        plot_col(x, y, patt)
+                        x += 1
+                    # consume (but don’t draw) any overflow past 639, to keep X in sync
+                    x += max(0, count - todo)
+            continue
 
-    if line:
-        lines.append(line)
+        # Everything else
+        if bit_image:
+            # In graphics mode **every byte is a column** (including 0x0E,0x0F,0x11,0x91,0x92,0x22, etc.)
+            if x < width:
+                plot_col(x, y, b)
+            x += 1  # keep X in sync even if we clipped
+        else:
+            # Text mode: we don’t render glyphs; we only maintain carriage position
+            # Standard cell ≈ 6 dots; Enhanced doubles width (you can wire that in if you track it)
+            if 32 <= b <= 126:
+                x = min(width - 1, x + 6)
+            elif b == 9:  # TAB every 8 chars -> 48 dots
+                x = min(width - 1, ((x // 48) + 1) * 48)
+            # other controls (SO/SI/reverse/quote/etc.) don’t affect dots here
 
-    # Render
-    width = max((len(l) for l in lines), default=0)
-    height = DOT_ROW_HEIGHT * len(lines)
-    img = np.full((height, width), bg, np.uint8)
-
-    y = 0
-    for cols in lines:
-        for x, col in enumerate(cols):
-            for r in range(DOT_ROW_HEIGHT):
-                if (col >> r) & 1:
-                    img[y + r, x] = fg
-        y += DOT_ROW_HEIGHT
-
-    # Trim whitespace like parse_and_render does
-    non_bg_rows = np.any(img != bg, axis=1)
-    non_bg_cols = np.any(img != bg, axis=0)
-
+    # Trim whitespace border
+    non_bg_rows = np.any(canvas != bg, axis=1)
+    non_bg_cols = np.any(canvas != bg, axis=0)
     if np.any(non_bg_rows):
-        first_row = np.argmax(non_bg_rows)
-        last_row = len(non_bg_rows) - np.argmax(np.flip(non_bg_rows))
-        first_col = np.argmax(non_bg_cols)
-        last_col = len(non_bg_cols) - np.argmax(np.flip(non_bg_cols))
-        img = img[first_row:last_row, first_col:last_col]
+        r0 = np.argmax(non_bg_rows)
+        r1 = len(non_bg_rows) - np.argmax(non_bg_rows[::-1])
+        c0 = np.argmax(non_bg_cols)
+        c1 = len(non_bg_cols) - np.argmax(non_bg_cols[::-1])
+        canvas = canvas[r0:r1, c0:c1]
     else:
-        img = np.full((1, 1), bg, dtype=np.uint8)
+        canvas = np.full((1, 1), bg, dtype=np.uint8)
 
-    return img
+    return canvas
 
 def scale_and_write_bmp(path, canvas, dpi=300, paper_width_in=8.5, paper_height_in=11, bg=255):
     """
@@ -235,39 +164,6 @@ def scale_and_write_bmp(path, canvas, dpi=300, paper_width_in=8.5, paper_height_
     final_img.save(path, format="BMP")
     return [path]
     
-def analyze_raw_data(raw):
-    """Suggests which parser to use based on data patterns."""
-    has_repeat = 0x1A in raw  # repeat column
-    has_esc = 0x1B in raw     # ESC sequences
-    
-    # Check for actual POS commands (0x10 followed by two ASCII digits)
-    has_pos = False
-    for i in range(len(raw) - 2):
-        if raw[i] == 0x10:
-            c1, c2 = raw[i+1], raw[i+2]
-            if 48 <= c1 <= 57 and 48 <= c2 <= 57:
-                has_pos = True
-                break
-    
-    # Count 0x08 and 0x0D markers (method2 signature)
-    count_08 = raw.count(0x08)
-    count_0d = raw.count(0x0D)
-    
-    print(f"Data size: {len(raw)} bytes")
-    print(f"Has repeat (0x1A): {has_repeat}")
-    print(f"Has POS (0x10+digits): {has_pos}")
-    print(f"Has ESC (0x1B): {has_esc}")
-    print(f"Graphics markers (0x08): {count_08}")
-    print(f"Line markers (0x0D): {count_0d}")
-    
-    # Use method2 if we have band markers and no complex commands
-    if count_08 > 0 and count_0d > 0 and not (has_repeat or has_esc or has_pos):
-        print("→ Using: parse_and_render2 (simple band format)")
-        return parse_and_render2(raw)
-    else:
-        print("→ Using: parse_and_render (complex format)")
-        return parse_and_render(raw)
-
 def start_server(host='0.0.0.0', port=65432):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, port))
@@ -286,7 +182,7 @@ def start_server(host='0.0.0.0', port=65432):
                     all_data.extend(data)
 
                 if all_data:
-                    canvas = analyze_raw_data(all_data)
+                    canvas = parse_and_render(all_data)
 
                     out_bmp = f"{time.time()}.bmp"
 
