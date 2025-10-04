@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-# TODO add comments
+
+# Receives raw print data over TCP from a Commodore 64 via an Arduino Uno R4 WiFi (or similar), 
+# converts to BMP, and optionally prints it.
  
 import subprocess
 import socket
 import time
 import sys
+import argparse
 import numpy as np
 from PIL import Image
-
-import numpy as np
-
-import numpy as np
 
 DOT_ROW_HEIGHT = 7  # vertical dots per printed band (MPS-803)
 
@@ -164,7 +163,7 @@ def scale_and_write_bmp(path, canvas, dpi=300, paper_width_in=8.5, paper_height_
     final_img.save(path, format="BMP")
     return [path]
     
-def start_server(host='0.0.0.0', port=65432):
+def start_server(host='0.0.0.0', port=65432, should_print=False):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, port))
         s.listen()
@@ -185,6 +184,10 @@ def start_server(host='0.0.0.0', port=65432):
                     canvas = parse_and_render(all_data)
 
                     out_bmp = f"{time.time()}.bmp"
+                    
+                    # create a dir called "images" if it doesn't exist
+                    subprocess.run(["mkdir", "-p", "images"], check=True, capture_output=True, text=True)
+                    out_bmp = "images/" + out_bmp
 
                     try:
                         created_files = scale_and_write_bmp(out_bmp, canvas)
@@ -192,11 +195,19 @@ def start_server(host='0.0.0.0', port=65432):
                             print(f"Wrote BMP: {created_files[0]} ({canvas.shape[1]}x{canvas.shape[0]})", file=sys.stderr)
                         else:
                             print(f"Wrote {len(created_files)} pages: {', '.join(created_files)}", file=sys.stderr)
-                        # print(f"Printing: {' '.join(created_files)}", file=sys.stderr)
-                        # subprocess.run(["lp"] + created_files, check=True, capture_output=True, text=True)
+                        
+                        if should_print:
+                            print(f"Printing: {' '.join(created_files)}", file=sys.stderr)
+                            subprocess.run(["lp"] + created_files, check=True, capture_output=True, text=True)
+
                     except Exception as e:
                         print(f"Failed to write or print BMP: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
-    start_server()
+    parser = argparse.ArgumentParser(description="Receives raw C64 print data, converts to BMP, and optionally prints.")
+    parser.add_argument("-p", "--print", action="store_true", help="Print the generated BMP file(s) using 'lp'.")
+    parser.add_argument("--host", default="0.0.0.0", help="Host for the server to listen on.")
+    parser.add_argument("--port", type=int, default=65432, help="Port for the server to listen on.")
+    args = parser.parse_args()
+    start_server(host=args.host, port=args.port, should_print=args.print)
