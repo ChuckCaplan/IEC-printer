@@ -16,8 +16,9 @@ int port = your_server_port;
 // #include "print_hh.h" // print shop sign
 // #include "print_letterhead.h" // print shop letterhead
 // #include "print_card.h" // print shop card
-#include "print_cert.h" // certificate maker
+// #include "print_cert.h" // certificate maker
 // #include "print_banner.h" // print shop banner
+#include "print_manny.h" // another print shop sign test
 
 // initial wifi status
 int status = WL_IDLE_STATUS;
