@@ -7,4 +7,4 @@ dev1
 printimage.d64
 arduino/print_*.h
 arduino/config.h
-scripts/images/
+scripts/ouput/

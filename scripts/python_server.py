@@ -2,6 +2,12 @@
 
 # Receives raw print data over TCP from a Commodore 64 via an Arduino Uno R4 WiFi (or similar), 
 # converts to BMP, and optionally prints it.
+
+# TODO:
+# - Handle text mode, including PETSCII art via PETSCII TTF
+# - Handle text printer commands (bold, underline, etc.)
+# - Add HTTP server mode to serve latest image or status page
+# - Add option to save raw data to a file for later analysis
  
 import subprocess
 import socket
@@ -185,9 +191,9 @@ def start_server(host='0.0.0.0', port=65432, should_print=False):
 
                     out_bmp = f"{time.time()}.bmp"
                     
-                    # create a dir called "images" if it doesn't exist
-                    subprocess.run(["mkdir", "-p", "images"], check=True, capture_output=True, text=True)
-                    out_bmp = "images/" + out_bmp
+                    # create a dir called "output" if it doesn't exist
+                    subprocess.run(["mkdir", "-p", "output"], check=True, capture_output=True, text=True)
+                    out_bmp = "output/" + out_bmp
 
                     try:
                         created_files = scale_and_write_bmp(out_bmp, canvas)
