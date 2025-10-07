@@ -3,6 +3,7 @@ basic.prg
 dev1
 *.pdf
 *.dump
+*.bmp
 printimage.d64
 arduino/print_*.h
 arduino/config.h

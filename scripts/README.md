@@ -86,7 +86,7 @@ c. To stop the service (if needed):
 d. To restart the service (if needed):
 - sudo systemctl restart iec-printer.service
 
-# Testing
+## 6. Testing
 
 a. Run the Python server and test if works. If you installed the service then this should already be running. Use the -p command to automatically print the converted PDF to your default printer. Leave it out if you only want to save the image to disk.
 - cd ~/IEC-printer/scripts

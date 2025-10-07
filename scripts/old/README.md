@@ -1,12 +1,14 @@
 # Old Scripts
 
-My original plan was to take raw printer data from the C64 (via the Arduino), package it as a disk image, and print in the [Vice](https://vice-emu.sourceforge.io/) C64 emulator to print as a BMP, and then print to a USB printer. This actually works really well for all type of MPS-803 (and other printer) jobs. However, converting a simple sign from The Print Shop to BMP with this script takes ~30 seconds to run on my Mac, and multiple minutes on a Raspberry Pi Zero W. Therefore I decided to write the entire conversion process in Python., which runs in seconds, even though it doesn't have the same level of MPS-803 support. I am leaving this here in case anyone finds this script useful.
+My original plan was to take raw printer data from the C64 (via the Arduino), package it as a disk image, and print in the [Vice](https://vice-emu.sourceforge.io/) C64 emulator to print as a BMP, and then print to a USB printer. This actually works really well for all type of MPS-803 (and other printer) jobs. However, converting a simple sign from The Print Shop to BMP with this script takes ~30 seconds to run on my Mac, and multiple minutes on a Raspberry Pi Zero W. Therefore I decided to re-write the entire conversion process in Python., which runs in seconds, even though it doesn't have the same level of MPS-803 support. I am leaving this here in case anyone finds this script useful.
 
 In Vice, make sure the Printer config is set to Graphics output mode for your printer before using.
 
 To run, pass in a file of raw printer data like print.dump out of Vice:
 
 ./run_vice_print.sh print.dump
+
+The resulting BMP file will be in the same directory.
 
 # License
 

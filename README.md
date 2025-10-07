@@ -14,14 +14,13 @@ This is a work in progress and is not fully working. One complete, this project 
 2. [Python Script Installation](./scripts/README.md)
 
 # Printer Support
-This project currently supports the MPS-803 printer, but could be extended to support other printers with some additional work. It also only currently supports graphics mode. Text mode, including PETSCII characters and control codes for underlining, bold, etc. is not currently supported. This was tested with Broderbund The Print Shop and Springboard Certificate Maker printing to an [MPS-803](https://www.historybit.it/wp-content/uploads/2020/06/Manual_MPS-803.pdf) printer.
+This project currently supports the MPS-803 printer, but could be extended to support other printers with some additional work. It also only currently supports graphics mode. Text mode, including PETSCII characters and control codes for underlining, bold, etc. is not currently supported. This was tested with Broderbund The Print Shop and Springboard Certificate Maker printing to what the C64 thought was an [MPS-803](https://www.historybit.it/wp-content/uploads/2020/06/Manual_MPS-803.pdf) printer.
 
 # YouTube Demo
 TBD
 
 # License
-This code is distributed under the GNU Public License
-which can be found at http://www.gnu.org/licenses/gpl.txt
+This code is distributed under the GNU Public License which can be found at http://www.gnu.org/licenses/gpl.txt
 
 # DISCLAIMER:
 The author is in no way responsible for any problems or damage caused by using this code. Use at your own risk.

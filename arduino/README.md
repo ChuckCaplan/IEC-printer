@@ -4,12 +4,12 @@ Forked from https://github.com/smdprutser/IEC-printer.
 
 Once working this Arduino sketch will send raw print data from a C64 to a Raspberry PI for printing to a USB printer. This is currently NOT WORKING.
 
-Make sure your project has a file named config.h with the following content:
-// WiFi credentials - REPLACE with your network details
-char ssid[] = "your_SSID";
-char pass[] = "your_PASSWORD";
-// Server details - REPLACE with your server's IP address. This is where the Python script to receive the print data will be running.
-char server[] = "your_server_ip";
+Make sure your project has a file named config.h with the following content:\
+// WiFi credentials - REPLACE with your network details\
+char ssid[] = "your_SSID";\
+char pass[] = "your_PASSWORD";\
+// Server details - REPLACE with your server's IP address. This is where the Python script to receive the print data will be running.\
+char server[] = "your_server_ip";\
 int port = your_server_port;
 
 # Hardware
