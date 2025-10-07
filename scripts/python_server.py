@@ -115,7 +115,7 @@ def scale_and_write_pdf(path, canvas, dpi=300, paper_width_in=8.5, paper_height_
     """
     Scales the canvas to fit a standard paper size at a given DPI,
     preserving the aspect ratio. Splits tall images into multiple pages.
-    Returns list of created file paths.
+    Returns a tuple of (created file path, number of pages).
     """
     source_img = Image.fromarray(canvas, mode="L")
     page_width_px = int(paper_width_in * dpi)
@@ -125,7 +125,7 @@ def scale_and_write_pdf(path, canvas, dpi=300, paper_width_in=8.5, paper_height_
     if source_width == 0 or source_height == 0:
         final_img = Image.new("L", (1, 1), bg)
         final_img.save(path, format="PDF")
-        return [path]
+        return (path, 1)
 
     # Check if this is a tall banner by aspect ratio
     # Banners are extremely tall relative to width (height > 2x width)
@@ -142,23 +142,22 @@ def scale_and_write_pdf(path, canvas, dpi=300, paper_width_in=8.5, paper_height_
         resized_img = source_img.resize((new_width, new_height), Image.Resampling.NEAREST)
         
         num_pages = (new_height + page_height_px - 1) // page_height_px
-        base_path = path.rsplit('.', 1)[0]
-        created_files = []
+        pages = []
         
         for page_num in range(num_pages):
             y_start = page_num * page_height_px
             y_end = min(y_start + page_height_px, new_height)
             page_img = resized_img.crop((0, y_start, new_width, y_end))
             
+            # Create a full-size page and paste the cropped image onto it
             final_page = Image.new("L", (page_width_px, page_height_px), bg)
             final_page.paste(page_img, (0, 0))
-            
-            page_path = f"{base_path}_page{page_num + 1}.pdf"
-            final_page.save(page_path, format="PDF")
-            created_files.append(page_path)
+            pages.append(final_page)
         
-        return created_files
-    
+        if pages:
+            pages[0].save(path, format="PDF", save_all=True, append_images=pages[1:])
+            return (path, num_pages)
+
     # Single page - scale to fit and center
     scale = min(page_width_px / source_width, page_height_px / source_height)
     new_width = int(source_width * scale)
@@ -167,7 +166,7 @@ def scale_and_write_pdf(path, canvas, dpi=300, paper_width_in=8.5, paper_height_
     final_img = Image.new("L", (page_width_px, page_height_px), bg)
     final_img.paste(resized_img, ((page_width_px - new_width) // 2, (page_height_px - new_height) // 2))
     final_img.save(path, format="PDF")
-    return [path]
+    return (path, 1)
     
 def start_server(host='0.0.0.0', port=65432, should_print=False):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -196,16 +195,18 @@ def start_server(host='0.0.0.0', port=65432, should_print=False):
                     out_pdf = "output/" + out_pdf
 
                     try:
-                        created_files = scale_and_write_pdf(out_pdf, canvas)
-                        if len(created_files) == 1:
-                            print(f"Wrote PDF: {created_files[0]} ({canvas.shape[1]}x{canvas.shape[0]})", file=sys.stderr)
-                        else:
-                            print(f"Wrote {len(created_files)} pages: {', '.join(created_files)}", file=sys.stderr)
+                        pdf_path, num_pages = scale_and_write_pdf(out_pdf, canvas)
+                        
+                        page_info = f", {num_pages} pages" if num_pages > 1 else ""
+                        size_info = f"{canvas.shape[1]}x{canvas.shape[0]}"
+                        
+                        print(f"Wrote PDF: {pdf_path} ({size_info}{page_info})", file=sys.stderr)
                         
                         if should_print:
-                            print(f"Printing: {' '.join(created_files)}", file=sys.stderr)
-                            subprocess.run(["lp"] + created_files, check=True, capture_output=True, text=True)
-
+                            # Printing a single file is simpler
+                            print(f"Printing: {pdf_path}", file=sys.stderr)
+                            subprocess.run(["lp", pdf_path], check=True, capture_output=True, text=True)
+                            
                     except Exception as e:
                         print(f"Failed to write or print PDF: {e}", file=sys.stderr)
 
