@@ -1,8 +1,7 @@
 .DS_Store
 basic.prg
 dev1
-*.bmp
-*.ppm
+*.pdf
 *.dump
 printimage.d64
 arduino/print_*.h

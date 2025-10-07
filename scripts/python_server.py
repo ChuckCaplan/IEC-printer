@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Receives raw print data over TCP from a Commodore 64 via an Arduino Uno R4 WiFi (or similar), 
-# converts to BMP, and optionally prints it.
+# converts to PDF, and optionally prints it.
 
 # TODO:
 # - Handle text mode, including PETSCII art via PETSCII TTF
@@ -111,7 +111,7 @@ def parse_and_render(raw: bytes, width: int = 640, bg: int = 255, fg: int = 0):
 
     return canvas
 
-def scale_and_write_bmp(path, canvas, dpi=300, paper_width_in=8.5, paper_height_in=11, bg=255):
+def scale_and_write_pdf(path, canvas, dpi=300, paper_width_in=8.5, paper_height_in=11, bg=255):
     """
     Scales the canvas to fit a standard paper size at a given DPI,
     preserving the aspect ratio. Splits tall images into multiple pages.
@@ -124,7 +124,7 @@ def scale_and_write_bmp(path, canvas, dpi=300, paper_width_in=8.5, paper_height_
     
     if source_width == 0 or source_height == 0:
         final_img = Image.new("L", (1, 1), bg)
-        final_img.save(path, format="BMP")
+        final_img.save(path, format="PDF")
         return [path]
 
     # Check if this is a tall banner by aspect ratio
@@ -153,8 +153,8 @@ def scale_and_write_bmp(path, canvas, dpi=300, paper_width_in=8.5, paper_height_
             final_page = Image.new("L", (page_width_px, page_height_px), bg)
             final_page.paste(page_img, (0, 0))
             
-            page_path = f"{base_path}_page{page_num + 1}.bmp"
-            final_page.save(page_path, format="BMP")
+            page_path = f"{base_path}_page{page_num + 1}.pdf"
+            final_page.save(page_path, format="PDF")
             created_files.append(page_path)
         
         return created_files
@@ -166,7 +166,7 @@ def scale_and_write_bmp(path, canvas, dpi=300, paper_width_in=8.5, paper_height_
     resized_img = source_img.resize((new_width, new_height), Image.Resampling.NEAREST)
     final_img = Image.new("L", (page_width_px, page_height_px), bg)
     final_img.paste(resized_img, ((page_width_px - new_width) // 2, (page_height_px - new_height) // 2))
-    final_img.save(path, format="BMP")
+    final_img.save(path, format="PDF")
     return [path]
     
 def start_server(host='0.0.0.0', port=65432, should_print=False):
@@ -189,16 +189,16 @@ def start_server(host='0.0.0.0', port=65432, should_print=False):
                 if all_data:
                     canvas = parse_and_render(all_data)
 
-                    out_bmp = f"{time.time()}.bmp"
+                    out_pdf = f"{time.time()}.pdf"
                     
                     # create a dir called "output" if it doesn't exist
                     subprocess.run(["mkdir", "-p", "output"], check=True, capture_output=True, text=True)
-                    out_bmp = "output/" + out_bmp
+                    out_pdf = "output/" + out_pdf
 
                     try:
-                        created_files = scale_and_write_bmp(out_bmp, canvas)
+                        created_files = scale_and_write_pdf(out_pdf, canvas)
                         if len(created_files) == 1:
-                            print(f"Wrote BMP: {created_files[0]} ({canvas.shape[1]}x{canvas.shape[0]})", file=sys.stderr)
+                            print(f"Wrote PDF: {created_files[0]} ({canvas.shape[1]}x{canvas.shape[0]})", file=sys.stderr)
                         else:
                             print(f"Wrote {len(created_files)} pages: {', '.join(created_files)}", file=sys.stderr)
                         
@@ -207,12 +207,12 @@ def start_server(host='0.0.0.0', port=65432, should_print=False):
                             subprocess.run(["lp"] + created_files, check=True, capture_output=True, text=True)
 
                     except Exception as e:
-                        print(f"Failed to write or print BMP: {e}", file=sys.stderr)
+                        print(f"Failed to write or print PDF: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Receives raw C64 print data, converts to BMP, and optionally prints.")
-    parser.add_argument("-p", "--print", action="store_true", help="Print the generated BMP file(s) using 'lp'.")
+    parser = argparse.ArgumentParser(description="Receives raw C64 print data, converts to PDF, and optionally prints.")
+    parser.add_argument("-p", "--print", action="store_true", help="Print the generated PDF file(s) using 'lp'.")
     parser.add_argument("--host", default="0.0.0.0", help="Host for the server to listen on.")
     parser.add_argument("--port", type=int, default=65432, help="Port for the server to listen on.")
     args = parser.parse_args()
