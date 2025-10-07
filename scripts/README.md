@@ -66,38 +66,42 @@ a. Clone the IEC-Printer repo.
 - cd ~    
 - git clone https://github.com/ChuckCaplan/IEC-printer.git
 
+## 5. Install the Service
 
+a. Install on startup
+- Edit iec-printer.service and change the 3 instances of your_username to your username (replace chuck with your username):\
+sed -i 's/your_username/chuck/g' ~/IEC-printer/scripts/ec-printer.service
+- sudo cp ~/IEC-printer/scripts/iec-printer.service /etc/systemd/system/
+- sudo systemctl daemon-reload
+- sudo systemctl enable iec-printer.service
+- sudo systemctl start iec-printer.service
 
-## 5. Install on startup so it will run as soon as plugged in.
+b. To check the status (if needed):
+- sudo systemctl status iec-printer.service
+- journalctl -u iec-printer.service -f
 
-Edit iec-printer.service and change the User to your username
-sudo cp ~/IEC-printer/scripts/iec-printer.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable iec-printer.service
-sudo systemctl start iec-printer.service
+c. To stop the service (if needed):
+- sudo systemctl stop iec-printer.service
 
-To check the status
-sudo systemctl status iec-printer.service
-journalctl -u iec-printer.service -f
-
-To stop the service
-sudo systemctl stop iec-printer.service
-
-To restart the service
-sudo systemctl restart iec-printer.service
-
-# if needed, install an x windows PDF viewer
-sudo apt install -y mupdf
-mupdf mypdf.pdf
+d. To restart the service (if needed):
+- sudo systemctl restart iec-printer.service
 
 # Testing
-To test this script on its own, you can pass in a raw printer data file from Vice using nc (or netcat on some systems):
 
-b. Run the Python server and test if works. Use the -p command to automatically print the converted PDF to your default printer. Leave it out if you only want to save the image to disk.
+a. Run the Python server and test if works. If you installed the service then this should already be running. Use the -p command to automatically print the converted PDF to your default printer. Leave it out if you only want to save the image to disk.
 - cd ~/IEC-printer/scripts
 - python3 python_server.py -p
 
-nc localhost 65432 < print.dump
+b. To test this script on its own, you can pass in a raw printer data file from Vice using nc (or netcat on some systems):
+
+- nc localhost 65432 < print.dump
+- Then look in ~/IEC-printer/output for the generated PDF
+
+c. If needed, install an X-Windows PDF viewer
+- sudo apt install -y mupdf
+- Then on Mac, run X Quartz:
+- ssh -X user@raspberrypi.local
+- mupdf ~/IEC-printer/output/mypdf.pdf
 
 # License
 
