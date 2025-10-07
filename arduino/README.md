@@ -1,8 +1,8 @@
-# IEC-printer
+# IEC-printer - Arduino Installation
 
 Forked from https://github.com/smdprutser/IEC-printer.
 
-Once working this Arduino sketch will send raw print data from a C64 to a Raspberry PI for printing to a USB printer. This is currently NOT WORKING for this use case.
+Once working this Arduino sketch will send raw print data from a C64 to a Raspberry PI for printing to a USB printer. This is currently NOT WORKING.
 
 Make sure your project has a file named config.h with the following content:
 // WiFi credentials - REPLACE with your network details
@@ -12,8 +12,16 @@ char pass[] = "your_PASSWORD";
 char server[] = "your_server_ip";
 int port = your_server_port;
 
+# Hardware
+ * Arduino Uno R4 Wifi
+ * IEC cable to connect the C64 to the Arduino via the following pins:
+    - IEC GND to Arduino GND
+    - IEC ATN to Arduino digital pin 3
+    - IEC CLK to Arduino digital pin 4
+    - IEC DATA to Arduino digital pin 5
+
 # Info
-Most of the IEC routines borowed from https://github.com/Larswad/uno2iec . Many thanks for solving the gory details of the IEC and kept me focussing at the printercode.
+Most of the IEC routines borowed from https://github.com/Larswad/uno2iec. Many thanks for solving the gory details of the IEC and kept me focussing at the printercode.
 
 # License
 This code is distributed under the GNU Public License
@@ -21,6 +29,3 @@ which can be found at http://www.gnu.org/licenses/gpl.txt
 
 # DISCLAIMER:
 The author is in no way responsible for any problems or damage caused by using this code. Use at your own risk.
-
-
-

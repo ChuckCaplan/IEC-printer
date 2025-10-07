@@ -7,11 +7,14 @@ This is a work in progress and is not fully working. One complete, this project 
 # Project Folder Structure
  * /arduino - Arduino sketch to be uploaded to an Arduino Uno R4 Wifi to handle IEC protocol communication and send to a Python script running on a Raspberry PI (or other system) for printing.
 
-* /scripts - A Python script that runs on a Raspberry Pi Zero W and listens for raw print data from the Arduino. It then converts the raw print data tp BMP images and prints via the lp command.
+* /scripts - A Python script that runs on a system like a Raspberry Pi Zero W and listens for raw print data from the Arduino. It then converts the raw print data tp BMP images and prints via the lp command.
 
 # Installation
 1. [Arduino Installation](./arduino/README.md)
 2. [Python Script Installation](./scripts/README.md)
+
+# Printer Support
+This project currently supports the MPS-803 printer, but could be extended to support other printers with some additional work. It also only currently supports graphics mode. Text mode, including PETSCII characters and control codes for underlining, bold, etc. is not currently supported. This was tested with Broderbund The Print Shop and Springboard Certificate Maker printing to an [MPS-803](https://www.historybit.it/wp-content/uploads/2020/06/Manual_MPS-803.pdf) printer.
 
 # YouTube Demo
 TBD

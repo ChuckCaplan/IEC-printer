@@ -1,12 +1,19 @@
-# IEC-printer
+# IEC-printer - Script Installation
 
-As of now, the only thing working in this folder is run_vice_print.sh. Pass in the filename to raw printer data, e.g. print.dump out of Vice, and this script will call Vice and convert the raw data to BMP images for printing. If you want the script to actually print, make sure the lpr command is uncommented.
+This Python script accepts raw MPS-803 printer data from an Arduino, converts to BMP images, and optionally prints to the default installed printer using the lp command. When all connected, MPS-803 print jobs from the C64 will automatically print to a modern (USB) printer.
 
-To test - use the nc(or netcat on some systems) to send the print data into the software
-nc localhost 65432 < certificate.dump
+# Installation
+
+These instructions assume you are using a Raspberry Pi Zero W and printing to a wireless (wi-fi) printer. Installing on other types of systems will be very similar but will need some modifications.
+
+1. TBD
+
+# Testing
+To test this script on its own, you can pass in a raw printer data file from Vice using nc (or netcat on some systems):
+
+nc localhost 65432 < print.dump
 
 # License
-## License
 
 This code is distributed under the GNU Public License
 which can be found at http://www.gnu.org/licenses/gpl.txt
