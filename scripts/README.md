@@ -70,7 +70,7 @@ a. Clone the IEC-Printer repo.
 
 a. Install on startup
 - Edit iec-printer.service and change the 3 instances of your_username to your username (replace chuck with your username):\
-sed -i 's/your_username/chuck/g' ~/IEC-printer/scripts/ec-printer.service
+sed -i 's/your_username/chuck/g' ~/IEC-printer/scripts/iec-printer.service
 - sudo cp ~/IEC-printer/scripts/iec-printer.service /etc/systemd/system/
 - sudo systemctl daemon-reload
 - sudo systemctl enable iec-printer.service
