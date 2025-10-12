@@ -62,6 +62,31 @@ byte IEC::timeoutWait(byte waitBit, boolean whileHigh)
 } // timeoutWait
 
 
+// Receive byte during ATN (passive, no handshaking)
+byte IEC::receiveATNByte(void)
+{
+	m_state = noFlags;
+
+	// During ATN, just listen passively - don't pull any lines
+	// Wait for CLOCK to go high (start of transmission)
+	if(timeoutWait(m_clockPin, true))
+		return 0;
+
+	byte data = 0;
+	// Get the bits, sampling on clock falling edge
+	for(byte n = 0; n < 8; n++) {
+		if(timeoutWait(m_clockPin, false))
+			return 0;
+		data >>= 1;
+		data |= (readDATA() ? (1 << 7) : 0);
+		if(timeoutWait(m_clockPin, true))
+			return 0;
+	}
+
+	// During ATN, we don't acknowledge - just return the data
+	return data;
+}
+
 // IEC Recieve byte standard function
 byte IEC::receiveByte(void)
 {
@@ -216,28 +241,37 @@ IEC::ATNCheck IEC::checkATN(ATNCmd& cmd)
 	byte i = 0;
 
 	if(!readATN()) {
-		// Attention line is active, go to listener mode and get message.
-		writeDATA(true);
-		writeCLOCK(false);
+		// Attention line is active - listen passively to see if it's for us
 		delayMicroseconds(TIMING_ATN_PREDELAY);
 
-		// Get first ATN byte, it is either LISTEN or TALK
-		ATNCommand c = (ATNCommand)receiveByte();
-		if(m_state & errorFlag)
+		// Get first ATN byte passively
+		ATNCommand c = (ATNCommand)receiveATNByte();
+		if(m_state & errorFlag) {
+			writeDATA(false);
+			writeCLOCK(false);
 			return ATN_ERROR;
+		}
 
 		if(c == (ATN_CODE_LISTEN | m_deviceNumber)) {
-			// Okay, we will listen.
-			c = (ATNCommand)receiveByte();
+			// Command is for us! Now actively participate
+			writeDATA(true);  // Acknowledge we're listening
+			delayMicroseconds(20);
+			writeDATA(false);
+			
+			c = (ATNCommand)receiveATNByte();
 			if (m_state & errorFlag) return ATN_ERROR;
 			cmd.code = c;
 
 			if((c & 0xF0) == ATN_CODE_DATA) {
+				// Acknowledge data channel
+				writeDATA(true);
+				delayMicroseconds(20);
+				writeDATA(false);
 				ret = ATN_CMD_LISTEN;
 			} else if(c != ATN_CODE_UNLISTEN) {
 				// Some other command. Record the cmd string until UNLISTEN is sent
 				for(;;) {
-					c = (ATNCommand)receiveByte();
+					c = (ATNCommand)receiveATNByte();
 					if(m_state & errorFlag) return ATN_ERROR;
 					if((m_state & atnFlag) && (ATN_CODE_UNLISTEN == c)) break;
 					if(i >= ATN_CMD_MAX_LENGTH) return ATN_ERROR; // overflow
@@ -246,14 +280,18 @@ IEC::ATNCheck IEC::checkATN(ATNCmd& cmd)
 				ret = ATN_CMD;
 			}
 		} else if (c == (ATN_CODE_TALK | m_deviceNumber)) {
-			// Okay, we will talk soon
-			c = (ATNCommand)receiveByte();
+			// Command is for us! Now actively participate
+			writeDATA(true);
+			delayMicroseconds(20);
+			writeDATA(false);
+			
+			c = (ATNCommand)receiveATNByte();
 			if(m_state & errorFlag) return ATN_ERROR;
 			cmd.code = c;
 
 			while(!readATN()) {
 				if(readCLOCK()) {
-					c = (ATNCommand)receiveByte();
+					c = (ATNCommand)receiveATNByte();
 					if(m_state & errorFlag) return ATN_ERROR;
 					if(i >= ATN_CMD_MAX_LENGTH) return ATN_ERROR; // overflow
 					cmd.str[i++] = c;
@@ -264,19 +302,15 @@ IEC::ATNCheck IEC::checkATN(ATNCmd& cmd)
 			ret = ATN_CMD_TALK;
 
 		} else {
-			// Not for us.
-			delayMicroseconds(TIMING_ATN_DELAY);
+			// Command not for us - stay passive
 			writeDATA(false);
 			writeCLOCK(false);
-			while(!readATN());
 		}
 	} else {
-		// No ATN, keep lines in a released state.
+		// No ATN - keep lines released
 		writeDATA(false);
 		writeCLOCK(false);
 	}
-
-	delayMicroseconds(TIMING_ATN_DELAY);
 	cmd.strLen = i;
 	return ret;
 } // checkATN
@@ -297,10 +331,11 @@ boolean IEC::init() {
 	digitalWrite(m_dataPin, LOW);
 	digitalWrite(m_clockPin, LOW);
 
-	// Set the initial pin mode to INPUT to be passive on the bus.
-	pinMode(m_atnPin, INPUT);
-	pinMode(m_dataPin, INPUT);
-	pinMode(m_clockPin, INPUT);
+	// Set pins to INPUT_PULLUP to enable internal pull-up resistors
+	// This is essential for proper IEC bus operation with multiple devices
+	pinMode(m_atnPin, INPUT_PULLUP);
+	pinMode(m_dataPin, INPUT_PULLUP);
+	pinMode(m_clockPin, INPUT_PULLUP);
 	m_state = noFlags;
 	return true;
 }

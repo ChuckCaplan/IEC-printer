@@ -68,12 +68,27 @@ void setup() {
 }
 
 void loop() {
+  // Debug: Show ATN line state occasionally
+  static unsigned long lastDebug = 0;
+  if(millis() - lastDebug > 5000) {
+    Serial.print(".");
+    lastDebug = millis();
+  }
+  
   // Handle IEC communication with the C64
-  interface.handler();
+  IEC::ATNCheck atnResult = interface.handler();
+  
+  // Debug output
+  if(atnResult == IEC::ATN_ERROR) {
+    Serial.println("ATN ERROR!");
+  } else if(atnResult != IEC::ATN_IDLE) {
+    Serial.print("ATN Result: ");
+    Serial.println(atnResult);
+  }
 
   // Check if a print job has finished and is ready to be sent
   if (interface.isPrintJobActive()) {
-    Serial.println("\nPrint job received from C64.");
+    Serial.println("\n=== PRINT JOB RECEIVED ===");
     Serial.print(printDataBuffer.size());
     Serial.println(" bytes of data captured.");
 
@@ -84,7 +99,7 @@ void loop() {
     // Clear buffer and reset state for the next job
     printDataBuffer.clear();
     interface.printJobHandled();
-    Serial.println("\nReady for next print job.");
+    Serial.println("=== READY FOR NEXT JOB ===\n");
   }
 }
 

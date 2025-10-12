@@ -83,6 +83,7 @@ public:
 
 private:
 	byte timeoutWait(byte waitBit, boolean whileHigh);
+	byte receiveATNByte(void);
 	byte receiveByte(void);
 	boolean sendByte(byte data, boolean signalEOI);
 	boolean turnAround(void);
@@ -92,7 +93,7 @@ private:
 	inline boolean readPIN(byte pinNumber)
 	{
 		// To be able to read line we must be set to input, not driving.
-		pinMode(pinNumber, INPUT);
+		pinMode(pinNumber, INPUT_PULLUP);
 		return digitalRead(pinNumber) ? true : false;
 	}
 
@@ -113,14 +114,14 @@ private:
 
 	// Writes to an IEC bus pin using open-collector logic.
 	// state == true:  Pull the line LOW (set to OUTPUT, write LOW).
-	// state == false: Release the line HIGH (set to INPUT, high-impedance).
+	// state == false: Release the line HIGH (set to INPUT_PULLUP).
 	inline void writePIN(byte pinNumber, boolean state)
 	{
 		if (state) {
 			digitalWrite(pinNumber, LOW);
 			pinMode(pinNumber, OUTPUT);
 		} else {
-			pinMode(pinNumber, INPUT);
+			pinMode(pinNumber, INPUT_PULLUP);
 		}
 	}
 
