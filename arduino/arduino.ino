@@ -124,6 +124,9 @@ void sendDataToServer() {
 
     Serial.println("Data sent. Closing connection.");
     client.stop();
+    // Mark job handled and clear buffer
+    printDataBuffer.clear();
+    interface.printJobHandled();
   } else {
     Serial.println("Connection to server failed!");
   }

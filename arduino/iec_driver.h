@@ -89,11 +89,11 @@ private:
 	boolean turnAround(void);
 	boolean undoTurnAround(void);
 
-	// false = LOW, true == HIGH
+	// false = RELEASE (high-Z), true == PULL LOW
 	inline boolean readPIN(byte pinNumber)
 	{
 		// To be able to read line we must be set to input, not driving.
-		pinMode(pinNumber, INPUT_PULLUP);
+		pinMode(pinNumber, INPUT);
 		return digitalRead(pinNumber) ? true : false;
 	}
 
@@ -121,7 +121,7 @@ private:
 			digitalWrite(pinNumber, LOW);
 			pinMode(pinNumber, OUTPUT);
 		} else {
-			pinMode(pinNumber, INPUT_PULLUP);
+			pinMode(pinNumber, INPUT);
 		}
 	}
 
@@ -138,6 +138,12 @@ private:
 	inline void writeCLOCK(boolean state)
 	{
 		writePIN(m_clockPin, state);
+	}
+
+	inline void releaseAllLines()
+	{
+		writeDATA(false);
+		writeCLOCK(false);
 	}
 
 	// communication must be reset

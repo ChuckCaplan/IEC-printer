@@ -12,8 +12,8 @@
 #define TIMING_NO_EOI       20  // delay before bits        (us)
 #define TIMING_EOI_WAIT     200 // delay to signal EOI      (us)
 #define TIMING_EOI_THRESH   20  // threshold for EOI detect (*10 us approx)
-#define TIMING_STABLE_WAIT  20  // line stabilization       (us)
-#define TIMING_ATN_PREDELAY 50  // delay required in atn    (us)
+#define TIMING_STABLE_WAIT  30  // line stabilization       (us)
+#define TIMING_ATN_PREDELAY 80  // delay required in atn    (us)
 #define TIMING_ATN_DELAY    100 // delay required after atn (us)
 
 // See timeoutWait below.
@@ -333,9 +333,9 @@ boolean IEC::init() {
 
 	// Set pins to INPUT_PULLUP to enable internal pull-up resistors
 	// This is essential for proper IEC bus operation with multiple devices
-	pinMode(m_atnPin, INPUT_PULLUP);
-	pinMode(m_dataPin, INPUT_PULLUP);
-	pinMode(m_clockPin, INPUT_PULLUP);
+	pinMode(m_atnPin, INPUT);
+	pinMode(m_dataPin, INPUT);
+	pinMode(m_clockPin, INPUT);
 	m_state = noFlags;
 	return true;
 }
