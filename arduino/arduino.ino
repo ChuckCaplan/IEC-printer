@@ -1,28 +1,36 @@
 #include <WiFiS3.h>
 #include <avr/pgmspace.h>
 #include "config.h"
+#include <vector>
+#include "globals.h"
+#include "iec_driver.h"
+#include "interface.h"
 
 /*
 Make sure your project has a file named config.h with the following content:
 // WiFi credentials - REPLACE with your network details
 char ssid[] = "your_SSID";
 char pass[] = "your_PASSWORD";
-// Server details - REPLACE with your server's IP address. This is where the Python script to receive the print data will be running.
-char server[] = "your_server_ip";
-int port = your_server_port;
+// Server details - REPLACE with your server's IP address or hostname. This is where the Python script to receive the print data will be running.
+char server[] = "raspberrypi.local";
+int port = 65432;
 */
 
-// This header is generated from your binary file (e.g., xxd -i my_image.bin > binary_data.h)
-// #include "print_hh.h" // print shop sign
-// #include "print_letterhead.h" // print shop letterhead
-// #include "print_card.h" // print shop card
-// #include "print_cert.h" // certificate maker
-// #include "print_banner.h" // print shop banner
-#include "print_manny.h" // another print shop sign test
+// IEC Pin configuration
+const byte IEC_ATN_PIN = 3;
+const byte IEC_CLK_PIN = 4;
+const byte IEC_DATA_PIN = 5;
+const byte CBM_DEVICE_NUMBER = 4; // Standard printer device number
+
+// IEC communication objects
+IEC iec(CBM_DEVICE_NUMBER);
+Interface interface(iec);
+
+// Buffer to hold incoming print data from C64
+std::vector<byte> printDataBuffer;
 
 // initial wifi status
 int status = WL_IDLE_STATUS;
-
 WiFiClient client;
 
 void setup() {
@@ -30,6 +38,11 @@ void setup() {
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
+
+  Serial.println("IEC Printer Interface starting...");
+
+  // Reserve some space for the print buffer to avoid reallocations during reception
+  printDataBuffer.reserve(8192);
 
   // check for the WiFi module
   if (WiFi.status() == WL_NO_MODULE) {
@@ -43,52 +56,61 @@ void setup() {
     Serial.println("Please upgrade the firmware");
   }
 
+  // Initialize IEC bus communication
+  iec.setPins(IEC_ATN_PIN, IEC_CLK_PIN, IEC_DATA_PIN);
+  iec.init();
+  Serial.println("IEC listener initialized.");
+  Serial.print("Listening as device #");
+  Serial.println(CBM_DEVICE_NUMBER);
+
   // attempt to connect to WiFi network
+  connectToWiFi();
+}
+
+void loop() {
+  // Handle IEC communication with the C64
+  interface.handler();
+
+  // Check if a print job has finished and is ready to be sent
+  if (interface.isPrintJobActive()) {
+    Serial.println("\nPrint job received from C64.");
+    Serial.print(printDataBuffer.size());
+    Serial.println(" bytes of data captured.");
+
+    if (printDataBuffer.size() > 0) {
+      sendDataToServer();
+    }
+
+    // Clear buffer and reset state for the next job
+    printDataBuffer.clear();
+    interface.printJobHandled();
+    Serial.println("\nReady for next print job.");
+  }
+}
+
+void connectToWiFi() {
   while (status != WL_CONNECTED) {
     Serial.print("Attempting to connect to SSID: ");
     Serial.println(ssid);
     status = WiFi.begin(ssid, pass);
-
-    // wait 10 seconds for connection
     delay(10000);
   }
-
   Serial.println("Connected to WiFi");
   printWifiStatus();
-
-  Serial.println("\nStarting connection to server...");
-  // if you get a connection, report back via serial
-  if (client.connect(server, port)) {
-    Serial.println("Connected to server");
-    Serial.print("Sending binary data: ");
-    Serial.print(print_dump_len);
-    Serial.println(" bytes");
-    
-    // Send data in chunks to avoid watchdog timeout
-    const size_t CHUNK_SIZE = 1024;
-    size_t sent = 0;
-    while (sent < print_dump_len) {
-      size_t to_send = min(CHUNK_SIZE, print_dump_len - sent);
-      client.write(print_dump + sent, to_send);
-      sent += to_send;
-      delay(10);  // Small delay to feed watchdog
-    }
-
-    // After sending, explicitly close the connection to signal the end of transmission.
-    Serial.println("Data sent. Closing connection.");
-    client.stop();
-  }
 }
 
-void loop() {
-  // if the server's disconnected, stop the client
-  if (!client.connected()) {
-    Serial.println();
-    Serial.println("Disconnecting from server.");
-    client.stop();
+void sendDataToServer() {
+  Serial.println("Connecting to server to send data...");
+  if (client.connect(server, port)) {
+    Serial.println("Connected to server");
+    
+    const size_t CHUNK_SIZE = 1024;
+    client.write(printDataBuffer.data(), printDataBuffer.size());
 
-    // do nothing forevermore
-    while (true);
+    Serial.println("Data sent. Closing connection.");
+    client.stop();
+  } else {
+    Serial.println("Connection to server failed!");
   }
 }
 
