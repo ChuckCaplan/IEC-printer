@@ -92,8 +92,6 @@ private:
 	// false = RELEASE (high-Z), true == PULL LOW
 	inline boolean readPIN(byte pinNumber)
 	{
-		// To be able to read line we must be set to input, not driving.
-		pinMode(pinNumber, INPUT);
 		return digitalRead(pinNumber) ? true : false;
 	}
 

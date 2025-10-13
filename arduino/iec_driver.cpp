@@ -13,7 +13,7 @@
 #define TIMING_EOI_WAIT     200 // delay to signal EOI      (us)
 #define TIMING_EOI_THRESH   20  // threshold for EOI detect (*10 us approx)
 #define TIMING_STABLE_WAIT  30  // line stabilization       (us)
-#define TIMING_ATN_PREDELAY 80  // delay required in atn    (us)
+#define TIMING_ATN_PREDELAY 50  // delay required in atn    (us)
 #define TIMING_ATN_DELAY    100 // delay required after atn (us)
 
 // See timeoutWait below.
@@ -240,78 +240,69 @@ IEC::ATNCheck IEC::checkATN(ATNCmd& cmd)
 	ATNCheck ret = ATN_IDLE;
 	byte i = 0;
 
-	if(!readATN()) {
-		// Attention line is active - listen passively to see if it's for us
+	if(!readATN()) { // ATN is active low
+		// Attention line is active, respond immediately
+		writeDATA(true);
+		writeCLOCK(false);
 		delayMicroseconds(TIMING_ATN_PREDELAY);
 
-		// Get first ATN byte passively
-		ATNCommand c = (ATNCommand)receiveATNByte();
+		// Get first ATN byte, it is either LISTEN or TALK
+		ATNCommand c = (ATNCommand)receiveByte();
 		if(m_state & errorFlag) {
-			writeDATA(false);
-			writeCLOCK(false);
 			return ATN_ERROR;
 		}
 
 		if(c == (ATN_CODE_LISTEN | m_deviceNumber)) {
-			// Command is for us! Now actively participate
-			writeDATA(true);  // Acknowledge we're listening
-			delayMicroseconds(20);
-			writeDATA(false);
+			// Command is for us! Get the secondary address
 			
-			c = (ATNCommand)receiveATNByte();
+			c = (ATNCommand)receiveByte();
 			if (m_state & errorFlag) return ATN_ERROR;
 			cmd.code = c;
 
 			if((c & 0xF0) == ATN_CODE_DATA) {
-				// Acknowledge data channel
-				writeDATA(true);
-				delayMicroseconds(20);
-				writeDATA(false);
+				// Data is coming, let the interface handler manage it.
 				ret = ATN_CMD_LISTEN;
 			} else if(c != ATN_CODE_UNLISTEN) {
 				// Some other command. Record the cmd string until UNLISTEN is sent
 				for(;;) {
-					c = (ATNCommand)receiveATNByte();
+					c = (ATNCommand)receiveByte();
 					if(m_state & errorFlag) return ATN_ERROR;
 					if((m_state & atnFlag) && (ATN_CODE_UNLISTEN == c)) break;
 					if(i >= ATN_CMD_MAX_LENGTH) return ATN_ERROR; // overflow
 					cmd.str[i++] = c;
 				}
 				ret = ATN_CMD;
+			} else {
+				// UNLISTEN, do nothing.
 			}
 		} else if (c == (ATN_CODE_TALK | m_deviceNumber)) {
-			// Command is for us! Now actively participate
-			writeDATA(true);
-			delayMicroseconds(20);
-			writeDATA(false);
+			// Command is for us! Get the secondary address
 			
-			c = (ATNCommand)receiveATNByte();
+			c = (ATNCommand)receiveByte();
 			if(m_state & errorFlag) return ATN_ERROR;
 			cmd.code = c;
 
-			while(!readATN()) {
-				if(readCLOCK()) {
-					c = (ATNCommand)receiveATNByte();
-					if(m_state & errorFlag) return ATN_ERROR;
-					if(i >= ATN_CMD_MAX_LENGTH) return ATN_ERROR; // overflow
-					cmd.str[i++] = c;
-				}
-			}
-
+			// ATN has been released, do bus turnaround
 			if(!turnAround()) return ATN_ERROR;
 			ret = ATN_CMD_TALK;
 
 		} else {
-			// Command not for us - stay passive
+			// Command not for us - release lines and wait for ATN to release
+			delayMicroseconds(TIMING_ATN_DELAY);
 			writeDATA(false);
 			writeCLOCK(false);
+			while(!readATN());
 		}
 	} else {
 		// No ATN - keep lines released
-		writeDATA(false);
-		writeCLOCK(false);
+			writeDATA(false);
+			writeCLOCK(false);
 	}
 	cmd.strLen = i;
+
+	// A delay is required before more ATN business can take place.
+	delayMicroseconds(TIMING_ATN_DELAY);
+
 	return ret;
 } // checkATN
 

@@ -45,22 +45,38 @@ IEC::ATNCheck Interface::handler(void) {
     if (retATN == IEC::ATN_ERROR) return retATN;
     if (retATN == IEC::ATN_IDLE)  return retATN;
 
+    // ATN_CMD means command string was received ending with UNLISTEN
+    // The command string contains the actual print data
+    if (retATN == IEC::ATN_CMD) {
+        if (DEBUG_IEC) {
+            Serial.print("ATN_CMD: Adding "); Serial.print(m_cmd.strLen);
+            Serial.println(" bytes from command string to buffer");
+        }
+        // Add command string data to print buffer
+        for (byte i = 0; i < m_cmd.strLen; i++) {
+            printDataBuffer.push_back(m_cmd.str[i]);
+        }
+    }
+
+    // OPEN: mark channel and capture any data in command string
+    if ((m_cmd.code & 0xF0) == IEC::ATN_CODE_OPEN) {
+        channelOpen = true;
+        currentSA = (m_cmd.code & 0x0F);
+        if (DEBUG_IEC) { Serial.print("OPEN channel SA="); Serial.println(currentSA); }
+    }
+
     // End-of-job
-    if (m_cmd.code == IEC::ATN_CODE_UNLISTEN || m_cmd.code == IEC::ATN_CODE_CLOSE) {
+    if (retATN == IEC::ATN_CMD || m_cmd.code == IEC::ATN_CODE_UNLISTEN || (m_cmd.code & 0xF0) == IEC::ATN_CODE_CLOSE) {
+        if (DEBUG_IEC) {
+            Serial.print("END - buffer has ");
+            Serial.print(printDataBuffer.size());
+            Serial.println(" bytes");
+        }
         if (!printDataBuffer.empty()) {
             printJobActive = true;
         }
         channelOpen = false;
         currentSA = 0xFF;
-        if (DEBUG_IEC) Serial.println(m_cmd.code == IEC::ATN_CODE_UNLISTEN ? "UNLISTEN" : "CLOSE");
-        return retATN;
-    }
-
-    // OPEN: mark channel
-    if ((m_cmd.code & 0xF0) == IEC::ATN_CODE_OPEN) {
-        channelOpen = true;
-        currentSA = (m_cmd.code & 0x0F);
-        if (DEBUG_IEC) { Serial.print("OPEN channel SA="); Serial.println(currentSA); }
         return retATN;
     }
 
