@@ -88,6 +88,23 @@ IEC::ATNCheck Interface::handler(void) {
         case IEC::ATN_CODE_DATA:
             if (retATN == IEC::ATN_CMD_LISTEN) {
                 handleATNCmdCodeDataListen();
+                // For printer: EOI means end of job, trigger print
+                if (m_iec.state() & IEC::eoiFlag) {
+                    if (DEBUG_IEC) {
+                        Serial.print("EOI - Print job complete, buffer has ");
+                        Serial.print(printDataBuffer.size());
+                        Serial.println(" bytes");
+                    }
+                    // Only print if buffer has substantial data (filter out init commands)
+                    if (printDataBuffer.size() > 100) {
+                        printJobActive = true;
+                        channelOpen = false;
+                        currentSA = 0xFF;
+                    } else {
+                        if (DEBUG_IEC) Serial.println("Skipping small buffer (likely init command)");
+                        printDataBuffer.clear();
+                    }
+                }
             }
             break;
         default:
@@ -107,16 +124,22 @@ void Interface::handleATNCmdCodeDataListen() {
     byte data;
     size_t byteCount = 0;
 
-    noInterrupts();
     do {
+        noInterrupts();
         data = m_iec.receive();
+        interrupts();
         if (!(m_iec.state() & IEC::errorFlag)) {
             printDataBuffer.push_back(data);
             byteCount++;
         }
         done = (m_iec.state() & (IEC::eoiFlag | IEC::errorFlag));
+        
+        // Check if ATN was asserted during byte reception
+        if (m_iec.state() & IEC::atnFlag) {
+            if (DEBUG_IEC) Serial.println("ATN detected during data reception");
+            done = true;
+        }
     } while (!done);
-    interrupts();
 
     if (DEBUG_IEC) {
         Serial.print("LISTEN received ");
