@@ -4,17 +4,18 @@ Forked from https://github.com/smdprutser/IEC-printer.
 
 This project allows a real Commodore 64 to print from the serial (IEC) port to a modern (USB) printer. When the C64 prints, data goes from the IEC (serial) port to an Arduino board that handles IEC protocol communication. The Arduino then passes the raw print data to a Python script running on a Raspberry PI (or Mac, PC, etc.). The Python script converts the raw printer data to PDF, and prints to a USB printer via the lp command. This is 100% automated - just print from the C64 right to a USB printer.
 
-This is currently a work in progress and is currently working as a POC for small print jobs such as signs in [The Print Shop](https://en.wikipedia.org/wiki/The_Print_Shop).
+This is currently a work in progress and is currently working as a POC for small print jobs such as signs and letterheads in [The Print Shop](https://en.wikipedia.org/wiki/The_Print_Shop).
 
 Working:
- * Signs in The Print Shop
+ *  Print Shop signs and letterheads
 
 Not Working:
- * Multi Page Banners
+ * Multi-Page Print Shop Banners - Error printing
+ * Print Shop Cards - Prints one page per card quarter
+ * Certificate Maker - Prints 1/3 of certificate to laser printer and errors
  * Text-based printing like word processors
 
 To Be Tested:
- * Certificate Maker
  * Newsroom
 
 # Project Folder Structure
@@ -28,9 +29,6 @@ To Be Tested:
 
 # Printer Support
 This project currently supports the MPS-803 printer, but could be extended to support other printers with some additional work. It also only currently supports graphics mode. Text mode, including PETSCII characters and control codes for underlining, bold, etc. is not currently supported. This was tested with Broderbund The Print Shop and Springboard Certificate Maker printing to what the C64 thought was an [MPS-803](https://www.historybit.it/wp-content/uploads/2020/06/Manual_MPS-803.pdf) printer.
-
-# YouTube Demo
-TBD
 
 # License
 This code is distributed under the GNU Public License which can be found at http://www.gnu.org/licenses/gpl.txt
