@@ -38,8 +38,7 @@ IEC::ATNCheck Interface::handler(void) {
             Serial.print(" str=[");
             dumpBytes(m_cmd.str, min((int)m_cmd.strLen, 6));
             if (m_cmd.strLen > 6) Serial.print(" ...");
-            Serial.print("] buf="); Serial.print(printDataBuffer.size());
-            Serial.println();
+            Serial.println("]");
         }
     }
 
@@ -88,9 +87,7 @@ IEC::ATNCheck Interface::handler(void) {
             break;
         case IEC::ATN_CODE_DATA:
             if (retATN == IEC::ATN_CMD_LISTEN) {
-                Serial.print(">");
                 handleATNCmdCodeDataListen();
-                Serial.print("<");
                 // For printer: EOI means end of job, trigger print
                 if (m_iec.state() & IEC::eoiFlag) {
                     if (DEBUG_IEC) {
@@ -137,7 +134,6 @@ void Interface::handleATNCmdCodeDataListen() {
         }
         done = (m_iec.state() & (IEC::eoiFlag | IEC::errorFlag));
         
-        // Check if ATN was asserted during byte reception
         if (m_iec.state() & IEC::atnFlag) {
             if (DEBUG_IEC) Serial.println("ATN detected during data reception");
             done = true;

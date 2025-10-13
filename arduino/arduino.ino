@@ -48,16 +48,7 @@ void setup() {
 }
 
 void loop() {
-  static unsigned long lastCheck = 0;
-  static unsigned long loopCount = 0;
-  
-  loopCount++;
-  if (millis() - lastCheck > 10000) {
-    Serial.print("[L:"); Serial.print(loopCount); Serial.print(" B:"); Serial.print(printDataBuffer.size()); Serial.println("]");
-    lastCheck = millis();
-    loopCount = 0;
-  }
-  
+
   // Handle IEC communication
   IEC::ATNCheck atnResult = interface.handler();
 
