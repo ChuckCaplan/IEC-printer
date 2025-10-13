@@ -38,7 +38,8 @@ IEC::ATNCheck Interface::handler(void) {
             Serial.print(" str=[");
             dumpBytes(m_cmd.str, min((int)m_cmd.strLen, 6));
             if (m_cmd.strLen > 6) Serial.print(" ...");
-            Serial.println("]");
+            Serial.print("] buf="); Serial.print(printDataBuffer.size());
+            Serial.println();
         }
     }
 
@@ -87,7 +88,9 @@ IEC::ATNCheck Interface::handler(void) {
             break;
         case IEC::ATN_CODE_DATA:
             if (retATN == IEC::ATN_CMD_LISTEN) {
+                Serial.print(">");
                 handleATNCmdCodeDataListen();
+                Serial.print("<");
                 // For printer: EOI means end of job, trigger print
                 if (m_iec.state() & IEC::eoiFlag) {
                     if (DEBUG_IEC) {
