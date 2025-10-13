@@ -1,10 +1,10 @@
 # IEC-printer - Script Installation
 
-This Python script accepts raw MPS-803 printer data from an Arduino, converts to PDF, and optionally prints to the default installed printer using the lp command. When all connected, MPS-803 print jobs from the C64 will automatically print to a modern (USB) printer.
+This Python script accepts raw MPS-803 printer data from an Arduino, converts to PDF, and optionally prints to the default installed printer using the lp command. When all connected, MPS-803 print jobs from the C64 will automatically print to a modern (USB or wifi) printer.
 
 # Installation
 
-These instructions assume you are using a Raspberry Pi Zero W and printing to a wireless (wi-fi) printer. Installing on other types of systems will be very similar but will need some modifications.
+These instructions assume you are using a Raspberry Pi Zero W and printing to a wireless (wifi) printer. Installing on other types of systems will be very similar but will need some modifications.
 
 ## 1. Install Raspberry Pi OS
 
@@ -16,7 +16,7 @@ a. Raspberry Pi Imager
 - Edit Settings
 - Hostname - raspberrypi.local
 - Set username and password
-- Configure wireless LAN with wi-fi info
+- Configure wireless LAN with wifi info
 - Set locale settings
 - Services/Enable SSH - Use password authentication
 - Save
@@ -47,10 +47,10 @@ a. Install CUPS
 - sudo systemctl enable --now cups
 - sudo systemctl enable --now avahi-daemon
 
-b. Display the printers that CUPS sees. Your printer will hopefully be in this list. If not you will need to troubleshoot. Try rebooting (command above) to make sure  Avahi and CUPS-browsed finish their startup handshake and can see your wi-fi printer. Copy the ipp:// address to be used later.
+b. Display the printers that CUPS sees. Your printer will hopefully be in this list. If not you will need to troubleshoot. Try rebooting (command above) to make sure  Avahi and CUPS-browsed finish their startup handshake and can see your wifi printer. Copy the ipp:// address to be used later.
 - sudo lpinfo -v
 
-c. Install your wi-fi printer as the default
+c. Install your wifi printer as the default
 - sudo lpadmin -p Brother -E -v "ipp://Brother%20HL-L8360CDW%20series._ipp._tcp.local/" -m everywhere
 - sudo lpadmin -d Brother
 - Confirm the newly installed printer is the default:\
