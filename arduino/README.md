@@ -2,7 +2,7 @@
 
 Forked from https://github.com/smdprutser/IEC-printer.
 
-Once working this Arduino sketch will send raw print data from a C64 to a Raspberry PI for printing to a USB printer. This is currently NOT WORKING.
+This Arduino sketch sends raw print data from a C64 to a Raspberry PI for printing to a USB printer. This is currently working for some but not all types of C64 print jobs.
 
 Make sure your project has a file named config.h with the following content:\
 // WiFi credentials - REPLACE with your network details\
