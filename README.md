@@ -28,7 +28,7 @@ To Be Tested:
 2. [Python Script Installation](./scripts/README.md)
 
 # Example
- This PDF was generated from The Print Shop on a real C64, passed through an Arduino Uno R4 Wifi, converted to PDF on a Raspberry Pi Zero, and printed to a Brother wifi printer.\
+ This PDF was generated from The Print Shop on a real C64, passed through an Arduino Uno R4 Wifi, converted to PDF on a Raspberry Pi Zero W, and printed to a Brother wifi printer.\
  [![Example](examples/1760386301.316215.png)](examples/1760386301.316215.pdf)
 
 # Printer Support
