@@ -1,7 +1,6 @@
 .DS_Store
 basic.prg
 dev1
-*.pdf
 *.dump
 *.bmp
 printimage.d64

@@ -27,6 +27,10 @@ To Be Tested:
 1. [Arduino Installation](./arduino/README.md)
 2. [Python Script Installation](./scripts/README.md)
 
+# Example
+ This PDF was generated from The Print Shop on a real C64, passed through an Arduino Uno R4 Wifi, converted to PDF on a Raspberry Pi Zero, and printed to a Brother wifi printer.\
+ [![Example](examples/1760386301.316215.png)](examples/1760386301.316215.pdf)
+
 # Printer Support
 This project currently supports the MPS-803 printer, but could be extended to support other printers with some additional work. It also only currently supports graphics mode. Text mode, including PETSCII characters and control codes for underlining, bold, etc. is not currently supported. This was tested with Broderbund The Print Shop and Springboard Certificate Maker printing to what the C64 thought was an [MPS-803](https://www.historybit.it/wp-content/uploads/2020/06/Manual_MPS-803.pdf) printer.
 
