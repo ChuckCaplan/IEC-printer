@@ -17,6 +17,8 @@ public:
 
 private:
 	void reset(void);
+	bool channelOpen = false;
+	byte currentSA = 0xFF;
 
 	// handler helpers.
 	void handleATNCmdCodeDataTalk();
