@@ -24,6 +24,20 @@ void Interface::reset(void) {
 }
 
 IEC::ATNCheck Interface::handler(void) {
+    // Guard-timeout: if UNLISTEN happened and no new data SA opened within 2000 ms, finalize job
+    if (waitingForContinuation) {
+        unsigned long elapsed = millis() - lastDataMs;
+        if (elapsed > 2000UL && !printDataBuffer.empty()) {
+            if (DEBUG_IEC) {
+                Serial.print("Guard-timeout: "); Serial.print(elapsed); Serial.println("ms elapsed. Finalizing job.");
+            }
+            waitingForContinuation = false;
+            printJobActive = true;
+            channelOpen = false;
+            return IEC::ATN_IDLE; // Job finalized, nothing more to do this cycle
+        }
+    }
+
     noInterrupts();
     IEC::ATNCheck retATN = m_iec.checkATN(m_cmd);
     interrupts();
@@ -66,7 +80,14 @@ IEC::ATNCheck Interface::handler(void) {
     }
 
     // End-of-job
-    if (retATN == IEC::ATN_CMD || m_cmd.code == IEC::ATN_CODE_UNLISTEN || (m_cmd.code & 0xF0) == IEC::ATN_CODE_CLOSE) {
+    // End-of-job only on CLOSE; if UNLISTEN occurs, start a guard timer
+    if (m_cmd.code == IEC::ATN_CODE_UNLISTEN) {
+        if (DEBUG_IEC) {
+            Serial.println("UNLISTEN detected. Starting guard timer.");
+        }
+        waitingForContinuation = true; lastDataMs = millis();
+    }
+    if ((m_cmd.code & 0xF0) == IEC::ATN_CODE_CLOSE) {
         if (DEBUG_IEC) {
             Serial.print("END - buffer has ");
             Serial.print(printDataBuffer.size());
@@ -77,6 +98,7 @@ IEC::ATNCheck Interface::handler(void) {
         }
         channelOpen = false;
         currentSA = 0xFF;
+        waitingForContinuation = false; // A CLOSE command is final
         return retATN;
     }
 
@@ -105,6 +127,11 @@ IEC::ATNCheck Interface::handler(void) {
                         printDataBuffer.clear();
                     }
                 }
+                // If LISTEN was interrupted by ATN, we need to process the new ATN command immediately.
+                if (m_iec.state() & IEC::atnFlag) {
+                    if (DEBUG_IEC) Serial.println("Re-checking ATN after LISTEN interruption.");
+                    return handler(); // Re-enter the handler to process the pending ATN command
+                }
             }
             break;
         default:
@@ -131,8 +158,9 @@ void Interface::handleATNCmdCodeDataListen() {
         if (!(m_iec.state() & IEC::errorFlag)) {
             printDataBuffer.push_back(data);
             byteCount++;
+            lastDataMs = millis();
         }
-        done = (m_iec.state() & (IEC::eoiFlag | IEC::errorFlag));
+        done = (m_iec.state() & IEC::errorFlag);
         
         if (m_iec.state() & IEC::atnFlag) {
             if (DEBUG_IEC) Serial.println("ATN detected during data reception");
@@ -144,5 +172,11 @@ void Interface::handleATNCmdCodeDataListen() {
         Serial.print("LISTEN received ");
         Serial.print(byteCount);
         Serial.println(" bytes");
+        if (m_iec.state() & IEC::errorFlag) {
+            Serial.println("LISTEN loop ended due to IEC error/timeout.");
+        }
+        if (m_iec.state() & IEC::atnFlag) {
+            Serial.println("LISTEN loop ended due to ATN signal.");
+        }
     }
 }

@@ -19,6 +19,8 @@ private:
 	void reset(void);
 	bool channelOpen = false;
 	byte currentSA = 0xFF;
+	unsigned long lastDataMs = 0;
+	bool waitingForContinuation = false;
 
 	// handler helpers.
 	void handleATNCmdCodeDataTalk();

@@ -112,7 +112,7 @@ byte IEC::receiveByte(void)
 
 		// Acknowledge by pull down data more than 60 us
 		writeDATA(true);
-		delayMicroseconds(TIMING_BIT);
+		delayMicroseconds(80);
 		writeDATA(false);
 
 		// but still wait for clk
@@ -252,6 +252,13 @@ IEC::ATNCheck IEC::checkATN(ATNCmd& cmd)
 			return ATN_ERROR;
 		}
 
+		// Handle standalone UNLISTEN, which can happen during multi-part prints
+		if (c == ATN_CODE_UNLISTEN) {
+			cmd.code = c;
+			ret = ATN_CMD;
+			// Fall through to release lines and return
+		}
+
 		if(c == (ATN_CODE_LISTEN | m_deviceNumber)) {
 			// Command is for us! Get the secondary address
 			
@@ -271,10 +278,8 @@ IEC::ATNCheck IEC::checkATN(ATNCmd& cmd)
 					if(i >= ATN_CMD_MAX_LENGTH) return ATN_ERROR; // overflow
 					cmd.str[i++] = c;
 				}
-				ret = ATN_CMD;
-			} else {
-				// UNLISTEN, do nothing.
-			}
+                ret = ATN_CMD;
+            } // An UNLISTEN here is handled by the standalone check at the top
 		} else if (c == (ATN_CODE_TALK | m_deviceNumber)) {
 			// Command is for us! Get the secondary address
 			
