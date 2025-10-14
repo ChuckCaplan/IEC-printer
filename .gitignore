@@ -8,3 +8,4 @@ arduino/print_*.h
 arduino/config.h
 scripts/ouput/
 .vscode/
+reference/
