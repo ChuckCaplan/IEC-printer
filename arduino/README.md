@@ -1,8 +1,6 @@
 # IEC-printer - Arduino Installation
 
-This Arduino sketch sends raw print data from a C64 to a Raspberry PI for printing to a USB or wifi printer, handling all IEC protocol handshaking and communication using the mature IECDevice library.
-
-**Note**: This code has been refactored to use the IECDevice library for reliable IEC bus communication. See REFACTOR_NOTES.md for details. 
+This Arduino sketch sends raw print data from a C64 to a Raspberry PI for printing to a USB or wifi printer, handling all IEC protocol handshaking and communication using the  [IECDevice](https://github.com/dhansel/IECDevice) library.
 
 Make sure your project has a file named config.h with the following content:\
 // WiFi credentials - REPLACE with your network details\
@@ -19,6 +17,13 @@ int port = 65432;
     - IEC ATN to Arduino digital pin 3
     - IEC CLK to Arduino digital pin 4
     - IEC DATA to Arduino digital pin 5
+
+# Library Installation
+* Make sure you install the IECDevice library to your Arduino libraries dir:
+    * cd ~/Documents/Arduino/libraries
+    * git clone https://github.com/dhansel/IECDevice.git
+
+
 
 # Info
 This implementation uses the IECDevice library by David Hansel (https://github.com/dhansel/IECDevice) which provides robust, well-tested IEC protocol handling. The library properly handles multi-device scenarios, ensuring the printer coexists peacefully with disk drives and other IEC devices.
