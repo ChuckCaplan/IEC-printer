@@ -38,6 +38,7 @@ private:
   uint8_t m_channel;
   bool m_inPrintJob;
   bool m_needsConnection;
+  bool m_connecting;
   unsigned long m_lastDataTime;
   uint32_t m_totalBytes;
   

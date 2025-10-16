@@ -3,13 +3,15 @@
 
 #include "IECPrinter.h"
 
-#define PRINT_TIMEOUT_MS 3000
+#define PRINT_TIMEOUT_MS 30000
+#define MIN_PRINT_SIZE 10
 
 IECPrinter::IECPrinter() : IECDevice(4)
 {
   m_channel = 0;
   m_inPrintJob = false;
   m_needsConnection = false;
+  m_connecting = false;
   m_lastDataTime = 0;
   m_chunkPos = 0;
   m_totalBytes = 0;
@@ -67,7 +69,10 @@ int8_t IECPrinter::canWrite()
 
 void IECPrinter::write(uint8_t data, bool eoi)
 {
-  if (!m_inPrintJob) return;
+  if (!m_inPrintJob) {
+    Serial.println("[DEBUG] write() called but not in print job!");
+    return;
+  }
   
   m_chunk[m_chunkPos++] = data;
   m_totalBytes++;
@@ -76,9 +81,6 @@ void IECPrinter::write(uint8_t data, bool eoi)
   if (m_chunkPos >= CHUNK_SIZE) {
     flushChunk();
   }
-  
-  // Don't end on EOI - banners send EOI after each part
-  // Let timeout handle job completion
 }
 
 int8_t IECPrinter::canRead()
@@ -104,15 +106,27 @@ uint8_t IECPrinter::read()
 
 void IECPrinter::task()
 {
-  if (m_needsConnection && !m_inPrintJob) {
+  if (m_needsConnection && !m_inPrintJob && !m_connecting) {
+    m_connecting = true;
+    setActive(false);
     startPrintJob();
+    setActive(true);
+    m_connecting = false;
     m_needsConnection = false;
   }
   
   if (m_inPrintJob && millis() - m_lastDataTime > PRINT_TIMEOUT_MS) {
-    if (m_totalBytes > 0) {
+    if (m_totalBytes >= MIN_PRINT_SIZE) {
       flushChunk();
       endPrintJob();
+    } else if (m_totalBytes > 0) {
+      Serial.print("Ignoring init job: ");
+      Serial.print(m_totalBytes);
+      Serial.println(" bytes");
+      m_client.stop();
+      m_inPrintJob = false;
+      m_chunkPos = 0;
+      m_totalBytes = 0;
     }
   }
 }
