@@ -9,8 +9,7 @@ Working:
  * Certificate Maker
 
 Not Working / Issues:
- * Text-based printing like word processors - Not working at all
- * 1-Minute timeout for large jobs, makes all jobs 1 minute slower
+ * Text-based printing like word processors - Not working, only graphics mode is supported
  * LOAD"*",8,1 sometimes needs to be retried once (DEVICE NOT FOUND)
 
 # Project Folder Structure
