@@ -5,14 +5,13 @@ Forked from https://github.com/smdprutser/IEC-printer, but at this point most of
 This project allows a real Commodore 64 to print from the serial (IEC) port to a modern (USB or wifi) printer. When the C64 prints, data goes from the IEC (serial) port to an Arduino board that handles IEC protocol communication. The Arduino then passes the raw print data to a Python script running on a Raspberry PI (or Mac, PC, etc.). The Python script converts the raw printer data to PDF, and prints to a printer via the lp command. This is 100% automated - just print from the C64 right to a USB / wifi printer.
 
 Working:
- *  The Print Shop signs, greeting cards, letterheads, and multi-page banners
+ * The Print Shop: Signs, greeting cards, letterheads, and multi-page banners
+ * Certificate Maker
 
-Not Working:
- * Certificate Maker - Prints certificates over multiple pages
+Not Working / Issues:
  * Text-based printing like word processors - Not working at all
-
-To Be Tested:
- * Newsroom
+ * 1-Minute timeout for large jobs, makes all jobs 1 minute slower
+ * LOAD"*",8,1 sometimes needs to be retried once (DEVICE NOT FOUND)
 
 # Project Folder Structure
  * /arduino - Arduino sketch to be uploaded to an Arduino Uno R4 Wifi to handle IEC protocol communication and send to a Python script running on a Raspberry PI (or other system) for printing.

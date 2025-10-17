@@ -3,7 +3,7 @@
 
 #include "IECPrinter.h"
 
-#define PRINT_TIMEOUT_MS 30000
+#define PRINT_TIMEOUT_MS 60000
 #define MIN_PRINT_SIZE 10
 
 IECPrinter::IECPrinter() : IECDevice(4)
@@ -108,9 +108,14 @@ void IECPrinter::task()
 {
   if (m_needsConnection && !m_inPrintJob && !m_connecting) {
     m_connecting = true;
+    unsigned long startTime = millis();
     setActive(false);
     startPrintJob();
     setActive(true);
+    unsigned long elapsed = millis() - startTime;
+    Serial.print("WiFi connection took: ");
+    Serial.print(elapsed);
+    Serial.println(" ms");
     m_connecting = false;
     m_needsConnection = false;
   }
