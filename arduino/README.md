@@ -18,8 +18,8 @@ int port = 65432;
 3. Once config.h has been created and the IECDevice library has been installed, compile the sketch and upload with the Arduino IDE.
 4. Connect the C64 to the Arduino with an IEC cable via the following pins:
     - IEC GND to Arduino GND
-    - IEC ATN to Arduino digital pin 3
-    - IEC CLK to Arduino digital pin 4
+    - IEC Attention (ATN) to Arduino digital pin 3
+    - IEC Clock (CLK) to Arduino digital pin 4
     - IEC DATA to Arduino digital pin 5
     - ![IEC Pins](../examples/iec_pins.png)
 5. Use the Serial Monitor as needed to view logs.
