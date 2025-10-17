@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Receives raw print data over TCP from a Commodore 64 via an Arduino Uno R4 WiFi (or similar), 
+# Receives raw print data over TCP from a Commodore 64 via an Arduino UNO R4 WiFi (or similar), 
 # converts to PDF, and optionally prints it.
 
 # TODO:

@@ -1,4 +1,4 @@
-// IEC Printer Device for Arduino Uno R4 WiFi
+// IEC Printer Device for Arduino UNO R4 WiFi
 // Based on IECDevice library by David Hansel
 
 #include "IECPrinter.h"

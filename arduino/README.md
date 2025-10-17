@@ -1,6 +1,6 @@
 # IEC-printer - Arduino Installation
 
-This Arduino Uno R4 Wifi sketch sends raw print data from a C64 to a Raspberry PI for printing to a USB or wifi printer, handling all IEC protocol handshaking and communication using the  [IECDevice](https://github.com/dhansel/IECDevice) library.
+This Arduino UNO R4 Wifi sketch sends raw print data from a C64 to a Raspberry PI for printing to a USB or wifi printer, handling all IEC protocol handshaking and communication using the  [IECDevice](https://github.com/dhansel/IECDevice) library.
 
 # Installation
 1. Create a file named config.h with the following content:
@@ -19,7 +19,7 @@ int port = 65432;
 4. Use the Serial Monitor as needed to view logs.
 
 # Hardware
- * Arduino Uno R4 Wifi
+ * Arduino UNO R4 Wifi
  * IEC cable to connect the C64 to the Arduino via the following pins:
     - IEC GND to Arduino GND
     - IEC ATN to Arduino digital pin 3
