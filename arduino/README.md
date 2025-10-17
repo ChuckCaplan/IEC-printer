@@ -1,14 +1,22 @@
 # IEC-printer - Arduino Installation
 
-This Arduino sketch sends raw print data from a C64 to a Raspberry PI for printing to a USB or wifi printer, handling all IEC protocol handshaking and communication using the  [IECDevice](https://github.com/dhansel/IECDevice) library.
+This Arduino Uno R4 Wifi sketch sends raw print data from a C64 to a Raspberry PI for printing to a USB or wifi printer, handling all IEC protocol handshaking and communication using the  [IECDevice](https://github.com/dhansel/IECDevice) library.
 
-Make sure your project has a file named config.h with the following content:\
-// WiFi credentials - REPLACE with your network details\
-char ssid[] = "your_SSID";\
-char pass[] = "your_PASSWORD";\
-// Server details - REPLACE with your server's IP address or hostname. This is where the Python script to receive the print data will be running.\
-char server[] = "raspberrypi.local";\
+# Installation
+1. Create a file named config.h with the following content:
+```
+// WiFi credentials - REPLACE with your network details
+char ssid[] = "your_SSID";
+char pass[] = "your_PASSWORD";
+// Server details - REPLACE with your server's IP address or hostname. This is where the Python script to receive the print data will be running.
+char server[] = "raspberrypi.local";
 int port = 65432;
+```
+2. Install the IECDevice library to your Arduino libraries dir (assuming Mac OS for this example):
+    * cd ~/Documents/Arduino/libraries
+    * git clone https://github.com/dhansel/IECDevice.git
+3. Once config.h has been created and the IECDevice library has been installed, compile the sketch and upload with the Arduino IDE.
+4. Use the Serial Monitor as needed to view logs.
 
 # Hardware
  * Arduino Uno R4 Wifi
@@ -17,13 +25,6 @@ int port = 65432;
     - IEC ATN to Arduino digital pin 3
     - IEC CLK to Arduino digital pin 4
     - IEC DATA to Arduino digital pin 5
-
-# Library Installation
-* Make sure you install the IECDevice library to your Arduino libraries dir:
-    * cd ~/Documents/Arduino/libraries
-    * git clone https://github.com/dhansel/IECDevice.git
-
-
 
 # Info
 This implementation uses the IECDevice library by David Hansel (https://github.com/dhansel/IECDevice) which provides robust, well-tested IEC protocol handling. The library properly handles multi-device scenarios, ensuring the printer coexists peacefully with disk drives and other IEC devices.
