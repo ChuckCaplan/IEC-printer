@@ -25,6 +25,7 @@ int port = 65432;
     - IEC ATN to Arduino digital pin 3
     - IEC CLK to Arduino digital pin 4
     - IEC DATA to Arduino digital pin 5
+    - ![IEC Pins](../examples/iec_pins.png)
 
 # Info
 This implementation uses the IECDevice library by David Hansel (https://github.com/dhansel/IECDevice) which provides robust, well-tested IEC protocol handling. The library properly handles multi-device scenarios, ensuring the printer coexists peacefully with disk drives and other IEC devices.
