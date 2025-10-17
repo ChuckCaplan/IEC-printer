@@ -17,6 +17,7 @@ int port = 65432;
     * git clone https://github.com/dhansel/IECDevice.git
 3. Once config.h has been created and the IECDevice library has been installed, compile the sketch and upload with the Arduino IDE.
 4. Use the Serial Monitor as needed to view logs.
+5. FYI - There is currently a 90 second timeout in place so larger print jobs like banners and certificates do not print prematurely. This unfortunately means that all print jobs will print 90 seconds after the job is done. This will hopefully be fixed in a later version by recognizing commands indicating the full job is complete.
 
 # Hardware
  * Arduino UNO R4 Wifi
