@@ -3,7 +3,7 @@
 
 #include "IECPrinter.h"
 
-#define PRINT_TIMEOUT_MS 60000
+#define PRINT_TIMEOUT_MS 90000
 #define MIN_PRINT_SIZE 10
 
 IECPrinter::IECPrinter() : IECDevice(4)
