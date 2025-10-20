@@ -88,9 +88,12 @@ d. To restart the service (if needed):
 
 ## 6. Testing
 
-a. Run the Python server and test if works. If you installed the service then this should already be running. Use the -p command to automatically print the converted PDF to your default printer. Leave it out if you only want to save the image to disk.
-- cd ~/IEC-printer/scripts
-- python3 python_server.py -p
+To test the full workflow, print a sign from Print Shop on a real C64, check the serial monitor of the Arduino UNO to make sure it receives and handles the print job, then check the printer service log (journalctl -u iec-printer.service -f) on the Raspberry Pi to confirm it received the job, saved a PDF of the job, and printed. If needed, additional testing steps are below:
+
+a. Run the Python server and test if working. If you installed the service then this should already be running. Run the first command below to check. Use the -p command to automatically print the converted PDF to your default printer. Leave it out if you only want to save the image to disk.
+- sudo systemctl status iec-printer.service
+- cd ~/IEC-printer
+- python3 scripts/python_server.py -p
 
 b. To test this script on its own, you can pass in a raw printer data file from Vice using nc (or netcat on some systems):
 
