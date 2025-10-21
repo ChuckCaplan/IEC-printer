@@ -8,6 +8,7 @@ Working:
  * The Print Shop: Signs, greeting cards, letterheads, and multi-page banners
  * Certificate Maker
  * Newsroom
+ * GeoPaint
  * Presumably other software that prints in graphics mode, though that has not been tested.
 
 Not Working / Issues:
