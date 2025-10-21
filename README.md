@@ -7,6 +7,7 @@ This project allows a real Commodore 64 to print from the serial (IEC) port to a
 Working:
  * The Print Shop: Signs, greeting cards, letterheads, and multi-page banners
  * Certificate Maker
+ * Newsroom
  * Presumably other software that prints in graphics mode, though that has not been tested.
 
 Not Working / Issues:
