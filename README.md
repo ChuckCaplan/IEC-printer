@@ -9,7 +9,7 @@ Working:
  * Certificate Maker
  * Newsroom
  * GeoPaint
- * Presumably other software that prints in graphics mode
+ * Presumably other software that prints in graphics mode to an MPS-803 printer
 
 Not Working / Issues:
  * Text-based printing like word processors
